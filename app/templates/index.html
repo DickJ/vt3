@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+    <form action="" method="post" name="signup">
+        {{ form.hidden_tag() }}
+        <p>
+            Last Name (as it appears on the schedule):<br>
+            {{ form.lname(size=20) }}
+            {% for error in form.lname.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}<br>
+            First Name (as it appears on the schedule):<br>
+            {{ form.fname(size=20) }}
+            {% for error in form.fname.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}<br>
+            Phone Number (format: 8505551234):<br>
+            {{  form.phone(size=16) }}
+            {% for error in form.phone.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}<br>
+            <input type="submit" value="Sign Up">
+        </p>
+    </form>
+    <hr>
+    <p>
+        <a href="/unsubscribe">Click here to unsubscribe</a>
+    </p>
+{% endblock %}
