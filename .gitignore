@@ -4,6 +4,3 @@
 *.pyc
 *.ipynb
 *.key
-/httplib2
-/twilio
-/misc
