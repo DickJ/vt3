@@ -3,7 +3,7 @@ from worker import helpers
 from datetime import date, timedelta
 from urllib import request, parse
 import ssl
-from misc.twilio_test import TwilioRestClient
+from twilio.rest import TwilioRestClient
 
 
 def sched_uploaded(c, d):
@@ -219,10 +219,6 @@ if __name__ == '__main__':
     # Download Schedule
     try:
         sched = process_raw_schedule(get_schedule_page(url, dt))
-
-        ################
-        send_all_texts(cur, dt)
-        #################
 
         # If schedule has been posted on cnatra or uploaded to postgress yet
         if sched and not sched_uploaded(cur, dt):

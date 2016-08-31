@@ -3,7 +3,7 @@ from flask import render_template, flash, redirect
 from twilio import TwilioRestException
 from app import app, helpers
 from app.forms import SignupForm
-from misc.twilio_test import TwilioRestClient
+from twilio.rest import TwilioRestClient
 
 
 @app.route('/', methods=['GET', 'POST'])
