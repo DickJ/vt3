@@ -195,6 +195,8 @@ def generate_message(user, data):
         msg = "You have 2 sims tomorrow. Sim 1 is %s with %s and briefs at %s. Sim 2 is %s with %s and briefs at %s."  % (data[0][7], partners[0], data[0][2], data[1][7], partners[1], data[1][2])
     elif type_of_day == ('Meetings',):
         msg = "You are scheduled for a meeting tomorrow at %s: %s" % (data[0][2], data[0][8])
+    elif type_of_day == ('Meetings',):
+        msg = "You have two meetings tomorrow. (1) %s: %s and (2) %s: %s" % (data[0][2], data[0][8], data[1][2], data[1][8])
     elif type_of_day == ('Watch',):
         msg = "You are scheduled for watch tomorrow from %s to %s: %s" (data[0][3], data[0][4], data[0][7])
     elif type_of_day == ('GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH'):
