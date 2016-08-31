@@ -21,6 +21,8 @@ def sched_uploaded(c, d):
     return bool(c.fetchone())
 
 def get_schedule_page(url, dt):
+    """
+    """
     context = ssl._create_unverified_context()
     f = request.urlopen(url, context=context)
     soup = BeautifulSoup(f, "lxml")
@@ -172,27 +174,29 @@ def generate_message(data):
     return msg
 
 if __name__ == '__main__':
+    print("Starting Worker")
     # Define Vars
     conn, cur = helpers.get_db_conn_and_cursor()
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
-    dt = date.today() + timedelta(days=1)
+    dt = date.today() + timedelta(days=2)
 
     # Download Schedule
-    sched = process_raw_schedule(get_schedule_page(url, dt))
+    try:
+        sched = process_raw_schedule(get_schedule_page(url, dt))
 
-    # If schedule has been posted on cnatra or uploaded to postgress yet
-    if sched and not sched_uploaded(cur, dt):
-        #TODO What we insert will change over weekends
-        insert_in_pg(cur, sched, dt)
-        #TODO delete old will change over weekends
-        delete_old_sched(cur, dt - timedelta(days=2))
-        conn.commit()
-        send_all_texts(cur, dt)
-        # Update schedule to not run until tomorrow
+        # If schedule has been posted on cnatra or uploaded to postgress yet
+        if sched and not sched_uploaded(cur, dt):
+            #TODO What we insert will change over weekends
+            insert_in_pg(cur, sched, dt)
+            #TODO delete old will change over weekends
+            delete_old_sched(cur, dt - timedelta(days=2))
+            conn.commit()
+            send_all_texts(cur, dt)
+            # Update schedule to not run until tomorrow
+    except AttributeError as e:
+        print("Schedule not yet published")
+    finally:
+        cur.close()
+        conn.close()
 
-    else:
-        # Sched not yet published, check again soon.
-        pass
-
-    cur.close()
-    conn.close()
+        print("Worker exiting")
