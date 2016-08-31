@@ -152,25 +152,61 @@ def send_all_texts(cur, dt):
         cur.execute("SELECT * FROM schedule WHERE date=%s and (instructor LIKE %s or student LIKE %s);",
                     [dt.strftime("%B %d"), ''.join(('%',user[0],'%')), ''.join(('%',user[0],'%'))])
 
-        client.messages.create(body=generate_message(cur.fetchall()),
+        client.messages.create(body=generate_message(user, cur.fetchall()),
                                to=user[1], from_='+17085353535')
 
 
-def generate_message(data):
+def generate_message(user, data):
     """
 
     Params:
-        data: (tuple of tuples)
+        user: (str) user's name as it appears on the schedule
+        data: (tuple of tuples) (id, type, brief, edt, rtb, instructor, student,
+              event, remarks, location, date)
 
     Returns:
         A str containing the body of the text message to be sent.
     """
     # TODO if len(users_schedule)==0; send a message that they're not scheduled
-    # CAI, GRND SCH, Meetings, MIL, T-6B Flight, T-6B SIMs, Watch
-    if len(data) == 0:
+    # CAI, GRND SCH, Meetings, MIL, T-6B Flight, T-6B SIMs, Watch, Pre-Flight
+    type_of_day = tuple([d[1] for d in data])
+    partners = []
+    for d in data:
+        if d[5] == user:
+            if d[6] == u'\xa0':
+                partners.append('')
+            else:
+                partners.append(d[6])
+        else:
+            if d[5] == u'\xa0':
+                partners.append('')
+            else:
+                partners.append(d[5])
+
+    if len(type_of_day) == 0:
         msg = "You are not scheduled for anything tomorrow"
+    elif type_of_day == ('T-6B Flight', 'T-6B Flight'):
+        msg = "You are scheduled for 2 flights tomorrow. Flight 1 is %s and briefs at %s with %s. Flight 2 is %s and briefs at %s with %s" % (data[0][7], data[0][2], partners[0], data[1][7], data[1][2], partners[1])
+    elif type_of_day == ('T-6B SIMs',):
+        msg = "You have a %s sim tomorrow. Brief time is %s with %s" % (data[0][7], data[0][2], partners[0])
+    elif type_of_day == ('T-6B Flight'):
+        msg = "You have a %s flight tomorrow. Brief time is %s with %s" % (d[0][7], d[0][2], partners[0])
+    elif type_of_day == ('T-6B SIMs', 'T-6B SIMs'):
+        msg = "You have 2 sims tomorrow. Sim 1 is %s with %s and briefs at %s. Sim 2 is %s with %s and briefs at %s."  % (data[0][7], partners[0], data[0][2], data[1][7], partners[1], data[1][2])
+    elif type_of_day == ('Meetings',):
+        msg = "You are scheduled for a meeting tomorrow at %s: %s" % (data[0][2], data[0][8])
+    elif type_of_day == ('Watch',):
+        msg = "You are scheduled for watch tomorrow from %s to %s: %s" (data[0][3], data[0][4], data[0][7])
+    elif type_of_day == ('GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH'):
+        msg = str(data)
+    elif type_of_day == ('T-6B Flight', 'T-6B Flight', 'T-6B Flight'):
+        msg = (data)
+    elif type_of_day == ('GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH'):
+        msg = (data)
     else:
         msg = str(data)
+        #TODO Send alert email for unseen type of day
+
     return msg
 
 if __name__ == '__main__':
@@ -178,11 +214,15 @@ if __name__ == '__main__':
     # Define Vars
     conn, cur = helpers.get_db_conn_and_cursor()
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
-    dt = date.today() + timedelta(days=2)
+    dt = date.today() + timedelta(days=1)
 
     # Download Schedule
     try:
         sched = process_raw_schedule(get_schedule_page(url, dt))
+
+        ################
+        send_all_texts(cur, dt)
+        #################
 
         # If schedule has been posted on cnatra or uploaded to postgress yet
         if sched and not sched_uploaded(cur, dt):
