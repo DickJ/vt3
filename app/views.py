@@ -35,14 +35,14 @@ def index():
                                                     confcode)
 
                     # Send Text Message via Twilio
-                    smstxt = "Welcome to VT-3 Notifications. Please click the link to confirm your registration. http://127.0.0.1:5000/verify/%d" \
+                    smstxt = "Welcome to VT-3 Notifications. Please click the link to confirm your registration. http://vt3.herokuapp.com/verify/%d" \
                              % confcode
-                    client = TwilioRestClient(
-                        account_sid=app.config['TWILIO_ACCOUNT_SID'],
-                        auth_token=app.config['TWILIO_AUTH_TOKEN'])
+                    account_sid = app.config['TWILIO_ACCOUNT_SID']
+                    auth_token = app.config['TWILIO_AUTH_TOKEN']
+                    client = TwilioRestClient(account_sid, auth_token)
                     try:
                         message = client.messages.create(body=smstxt, to=phone,
-                                                         from_='+17085555555')
+                                                         from_='+17089288210')
                     except TwilioRestException as e:
                         print(e)
 
