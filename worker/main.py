@@ -17,7 +17,7 @@ def sched_uploaded(c, d):
     Returns:
         True if the date "dt" has already been processed, else returns False
     """
-    c.execute("SELECT id FROM schedule WHERE date=%s", [d.strftime("%B %d")])
+    c.execute("SELECT id FROM schedule WHERE date=%s", [d.strftime("%B %-d")])
     return bool(c.fetchone())
 
 def get_schedule_page(url, dt):
@@ -28,7 +28,7 @@ def get_schedule_page(url, dt):
     soup = BeautifulSoup(f, "lxml")
 
     # Retrieve the page for the proper date
-    calvar = soup.find("a", {"title": dt.strftime("%B %d")}).get('href')
+    calvar = soup.find("a", {"title": dt.strftime("%B %-d")}).get('href')
     et, ea = calvar.lstrip('javascript:__doPostBack(').rstrip(')').split(',')
     et = et.strip("'")
     ea = ea.strip("'")
@@ -111,7 +111,7 @@ def insert_in_pg(cr, s, d):
                      row['event'],
                      row['remarks'],
                      row['location'],
-                     d.strftime('%B %d')])
+                     d.strftime('%B %-d')])
 
 
 def delete_old_sched(cur, dt):
@@ -125,7 +125,7 @@ def delete_old_sched(cur, dt):
     Returns: None
     """
     cur.execute("DELETE FROM schedule WHERE date = %s",
-                [dt.strftime('%B %d')])
+                [dt.strftime('%B %-d')])
 
 
 def send_all_texts(cur, dt):
@@ -150,7 +150,7 @@ def send_all_texts(cur, dt):
     for user in all_users:
         # Ugly SQL, but this just says "Find user's schedule for a date'
         cur.execute("SELECT * FROM schedule WHERE date=%s and (instructor LIKE %s or student LIKE %s);",
-                    [dt.strftime("%B %d"), ''.join(('%',user[0],'%')), ''.join(('%',user[0],'%'))])
+                    [dt.strftime("%B %-d"), ''.join(('%',user[0],'%')), ''.join(('%',user[0],'%'))])
 
         client.messages.create(body=generate_message(user, cur.fetchall()),
                                to=user[1], from_='+17089288210')
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
     dt = date.today() + timedelta(days=1)
 
-    print("Current date: %r" % date.today)
+    print("Current date: %r" % date.today())
     print("Checking schedule for %r" % dt)
 
     # Download Schedule
@@ -235,7 +235,7 @@ if __name__ == '__main__':
             send_all_texts(cur, dt)
             # Update schedule to not run until tomorrow
     except AttributeError as e:
-        print("e")
+        print(e)
         print("Schedule not yet published")
     finally:
         cur.close()
