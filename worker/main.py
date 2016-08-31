@@ -218,6 +218,9 @@ if __name__ == '__main__':
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
     dt = date.today() + timedelta(days=1)
 
+    print("Current date: %r" % date.today)
+    print("Checking schedule for %r" % dt)
+
     # Download Schedule
     try:
         sched = process_raw_schedule(get_schedule_page(url, dt))
@@ -232,6 +235,7 @@ if __name__ == '__main__':
             send_all_texts(cur, dt)
             # Update schedule to not run until tomorrow
     except AttributeError as e:
+        print("e")
         print("Schedule not yet published")
     finally:
         cur.close()
