@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 from worker import helpers
 from datetime import date, timedelta
+import logging
+import re
 from urllib import request, parse
 import ssl
 from twilio.rest import TwilioRestClient
@@ -167,50 +169,46 @@ def generate_message(user, data):
     Returns:
         A str containing the body of the text message to be sent.
     """
-    # TODO if len(users_schedule)==0; send a message that they're not scheduled
-    # CAI, GRND SCH, Meetings, MIL, T-6B Flight, T-6B SIMs, Watch, Pre-Flight
     type_of_day = tuple([d[1] for d in data])
-    partners = []
-    for d in data:
-        if d[5] == user:
-            if d[6] == u'\xa0':
-                partners.append('')
-            else:
-                partners.append(d[6])
-        else:
-            if d[5] == u'\xa0':
-                partners.append('')
-            else:
-                partners.append(d[5])
-
-    print(partners)
-    print(type_of_day)
+    msg = ''
 
     if len(type_of_day) == 0:
         msg = "You are not scheduled for anything tomorrow"
-    elif type_of_day == ('T-6B Flight', 'T-6B Flight'):
-        msg = "You are scheduled for 2 flights tomorrow. Flight 1 is %s and briefs at %s with %s. Flight 2 is %s and briefs at %s with %s" % (data[0][7], data[0][2], partners[0], data[1][7], data[1][2], partners[1])
-    elif type_of_day == ('T-6B SIMs',):
-        msg = "You have a %s sim tomorrow. Brief time is %s with %s" % (data[0][7], data[0][2], partners[0])
-    elif type_of_day == ('T-6B Flight'):
-        msg = "You have a %s flight tomorrow. Brief time is %s with %s" % (d[0][7], d[0][2], partners[0])
-    elif type_of_day == ('T-6B SIMs', 'T-6B SIMs'):
-        msg = "You have 2 sims tomorrow. Sim 1 is %s with %s and briefs at %s. Sim 2 is %s with %s and briefs at %s."  % (data[0][7], partners[0], data[0][2], data[1][7], partners[1], data[1][2])
-    elif type_of_day == ('Meetings',):
-        msg = "You are scheduled for a meeting tomorrow at %s: %s" % (data[0][2], data[0][8])
-    elif type_of_day == ('Meetings', 'Meetings'):
-        msg = "You have two meetings tomorrow. (1) %s: %s and (2) %s: %s" % (data[0][2], data[0][8], data[1][2], data[1][8])
-    elif type_of_day == ('Watch',):
-        msg = "You are scheduled for watch tomorrow from %s to %s: %s" (data[0][3], data[0][4], data[0][7])
-    elif type_of_day == ('GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH'):
-        msg = str(data)
-    elif type_of_day == ('T-6B Flight', 'T-6B Flight', 'T-6B Flight'):
-        msg = (data)
-    elif type_of_day == ('GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH', 'GRND SCH'):
-        msg = (data)
     else:
-        msg = str(data)
-        #TODO Send alert email for unseen type of day
+        datadict = []
+        for d in data:
+            datadict.append({'type': d[1], 'brief': d[2], 'edt': d[3],
+                             'rtb': d[4], 'instructor': d[5], 'student': d[6],
+                             'event': d[7], 'remarks': d[8], 'location': d[9]})
+
+        for event in datadict:
+            msg = ''.join((msg, '%s, ' % (event['event'])))
+            if event['brief'] != u'\xa0':
+                msg = ''.join((msg, '%s, ' % event['brief']))
+            elif event['edt'] != u'\xa0':
+                msg = ''.join((msg, '%s, ' % event['edt']))
+            else:
+                # TODO Raise or Report an error
+                pass
+
+            if event['instructor'] != u'\xa0' and event['student'] != u'\xa0':
+                msg = ''.join((msg, '%s/%s' % (event['instructor'], event['student'])))
+            elif event['instructor'] != u'\xa0':
+                msg = ''.join((msg, '%s' % (event['instructor'])))
+            elif event['student'] != u'\xa0':
+                msg = ''.join((msg, '%s' % (event['student'])))
+            else:
+                #TODO Raise or report an error
+                pass
+
+            if event['remarks'] != u'\xa0':
+                msg = ''.join((msg, ', %s' % event['remarks']))
+
+            if event['location'] != u'\xa0':
+                msg = ''.join((msg, ', %s' % event['location']))
+
+            msg = ''.join((msg, '; '))
+        msg = msg.rstrip('; ') # Remove '; ' from end of message
 
     return msg
 
@@ -219,9 +217,8 @@ if __name__ == '__main__':
     # Define Vars
     conn, cur = helpers.get_db_conn_and_cursor()
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
-    dt = date.today() + timedelta(days=1)
+    dt = date.today() - timedelta(hours=5) + timedelta(days=1) # adjust timezone
 
-    print("Current date: %r" % date.today())
     print("Checking schedule for %r" % dt)
 
     # Download Schedule
