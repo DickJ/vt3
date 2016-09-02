@@ -8,3 +8,9 @@ class SignupForm(Form):
     lname = StringField('lname', validators=[DataRequired()])
     fname = StringField('fname', validators=[DataRequired()])
     phone = StringField('phone', validators=[DataRequired()])
+
+class UnsubscribeForm(Form):
+    #phone = StringField('phone', validators=[Regexp('9 digits or 10 if the first is 1')])
+    lname = StringField('lname', validators=[DataRequired()])
+    fname = StringField('fname', validators=[DataRequired()])
+    phone = StringField('phone', validators=[DataRequired()])

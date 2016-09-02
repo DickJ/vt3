@@ -2,7 +2,8 @@ import random
 from flask import render_template, flash, redirect
 from twilio import TwilioRestException
 from app import app, helpers
-from app.forms import SignupForm
+from app.forms import SignupForm, UnsubscribeForm
+#from misc.twilio_test import TwilioRestClient
 from twilio.rest import TwilioRestClient
 
 
@@ -35,8 +36,8 @@ def index():
                                                     confcode)
 
                     # Send Text Message via Twilio
-                    smstxt = "Welcome to VT-3 Notifications. Please click the link to confirm your registration. http://vt3.herokuapp.com/verify/%d" \
-                             % confcode
+                    smstxt = "Welcome to VT-3 Notifications. Please click the link to confirm your registration. %s%s%d" \
+                             % (app.config['BASE_URL'], '/verify/', confcode)
                     account_sid = app.config['TWILIO_ACCOUNT_SID']
                     auth_token = app.config['TWILIO_AUTH_TOKEN']
                     client = TwilioRestClient(account_sid, auth_token)
@@ -62,15 +63,81 @@ def index():
         cur.close()
         conn.close()
 
-        return redirect('/index')
+        return redirect('/')
 
     return render_template("index.html", form=form)
 
 
-@app.route('/unsubscribe')
+@app.route('/unsubscribe', methods=['GET', 'POST'])
 def unsubscribe():
-    return render_template("unsubscribe.html")
+    """
+    Process a request to unsubscribe and return the template
+    """
+    form = UnsubscribeForm()
+    # If the form has been submitted
+    if form.validate_on_submit():
+        # Open db connection
+        conn, cur = helpers.get_db_conn_and_cursor(app.config)
 
+        # If all data is valid
+        phone = helpers.is_valid_number(form.phone.data)
+        print(phone)
+        if phone:
+            # If phone number does not already exist as a verified user
+            cur.execute('SELECT * FROM verified WHERE phone=%s AND fname=%s and lname=%s;',
+                        [phone, form.fname.data.upper(), form.lname.data.upper()])
+            if cur.fetchone():
+                # Process unsubscribe request
+                confcode = random.getrandbits(128)
+                flashmsg = helpers.unsubscribe_user(cur, phone, confcode)
+                smstxt = "Unsubscribe request received. Please click the link to verify. %s%s%d" \
+                         % (app.config['BASE_URL'], '/unsubscribe/', confcode)
+                # Send Text Message via Twilio
+                account_sid = app.config['TWILIO_ACCOUNT_SID']
+                auth_token = app.config['TWILIO_AUTH_TOKEN']
+                client = TwilioRestClient(account_sid, auth_token)
+                try:
+                    message = client.messages.create(body=smstxt, to=phone,
+                                                     from_='+17089288210')
+                except TwilioRestException as e:
+                    print(e)
+
+                #flash(flashmsg)
+                #return redirect('/')
+            else:
+                # Alert user this was an invalid unsubscribe request
+                flashmsg = 'Data does not match anyone in our database. Please confirm name spelling and phone number.'
+
+        else:
+            flashmsg = 'Invalid phone number. Please try again.'
+            form.phone.errors.append("Invalid format.")
+
+        flash(flashmsg)
+        conn.commit()
+        print('committing')
+        cur.close()
+        conn.close()
+
+    return render_template("unsubscribe.html", form=form)
+
+@app.route('/unsubscribe/<confcode>')
+def verify_unsubscribe(confcode):
+    conn, cur = helpers.get_db_conn_and_cursor(app.config)
+
+    cur.execute("SELECT (phone) FROM unsubscribe WHERE confcode=%s", [confcode])
+    d = cur.fetchone()
+    if d:
+        cur.execute('DELETE FROM verified WHERE phone=%s', [d[0]])
+        cur.execute('DELETE FROM unsubscribe WHERE phone=%s', [d[0]])
+        conn.commit()
+        msg = "You have been successfully unsubscribed."
+    else:
+        msg = "ERROR: The supplied confirmation code is not valid."
+
+    cur.close()
+    conn.close()
+
+    return render_template("unsubscribe.html", form=UnsubscribeForm(), msg=msg)
 
 @app.route('/verify/<confcode>')
 def verify(confcode):
@@ -91,6 +158,8 @@ def verify(confcode):
         # sign up at night and need tomorrows schedule)
         msg = "Congratulations! You have successfully been signed up. You " \
               "will begin receiving messages at the next run."
+        helpers.welcome_message(d[0], ', '.join((d[1], d[2])))
+
     else:
         msg = "ERROR: The supplied confirmation code is not valid."
 

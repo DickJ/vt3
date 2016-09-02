@@ -64,7 +64,7 @@ def sign_up_user(cur, phone, lname, fname, confcode):
         confcode: (int) random 128-bit code
 
     Returns
-        (str) a response message to the user containing a confirmation link
+        (str) a response message to the user to be flashed on the webpage
     """
     assert re.match('\+\d{9}', phone), "Invalid phone number format: %r" % phone
     assert type(confcode) == int, "Invalid confirmation code: %r" % confcode
@@ -79,3 +79,27 @@ def sign_up_user(cur, phone, lname, fname, confcode):
     )
 
     return 'Signup requested for %s. You should receive a text message shortly' % (phone)
+
+def unsubscribe_user(cur, phone, confcode):
+    """
+    Adds a user to the unsubscribe table
+
+    Params:
+        cur: (psycopg2.extensions.cursor) A Cursor to the database
+        phone: (str) phone number in E.164 format
+        confcode: (int) randome 128-bit code
+
+    Returns:
+        (str) a response message to the user to be flashed on the webpage
+    """
+    assert re.match('\+\d{9}', phone), "Invalid phone number format: %r" % phone
+    assert type(confcode) == int, "Invalid confirmation code: %r" % confcode
+    print((phone, confcode))
+    cur.execute("INSERT INTO unsubscribe (phone, confcode) VALUES (%s, %s);", [phone, confcode])
+
+    return 'Unsubscribe requested for %s. You should receive a text message shortly to confirm unsubscribe' % (phone)
+
+def welcome_message(phone, name):
+    """
+    """
+    pass

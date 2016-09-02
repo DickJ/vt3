@@ -7,3 +7,4 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 TWILIO_ACCOUNT_SID = os.environ["TWILIO_ACCOUNT_SID"]
 TWILIO_AUTH_TOKEN = os.environ["TWILIO_AUTH_TOKEN"]
 WTF_CSRF_ENABLED = True
+BASE_URL = 'https://vt3.herokuapp.com'
