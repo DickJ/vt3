@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from worker import helpers
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 import logging
 import re
 from urllib import request, parse
@@ -14,7 +14,7 @@ def sched_uploaded(c, d):
 
     Params:
         c: (psycopg2.extensions.cursor)
-        d: (datetime.date) containing the date we desire to check
+        d: (datetime.datetime) containing the date we desire to check
 
     Returns:
         True if the date "dt" has already been processed, else returns False
@@ -96,7 +96,7 @@ def insert_in_pg(cr, s, d):
     Params:
         cr: (psycopg2.extensions.cursor) Cursor to database
         s: (list of dicts) Daily schedule
-        d: (datetime.date) Schedule date
+        d: (datetime.datetime) Schedule date
 
     Returns: None
     """
@@ -122,7 +122,7 @@ def delete_old_sched(cur, dt):
 
     Params:
         cur: (psycopg2.extensions.cursor) Database cursor
-        dt: (datetime.date) date to be deleted
+        dt: (datetime.datetime) date to be deleted
 
     Returns: None
     """
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     # Define Vars
     conn, cur = helpers.get_db_conn_and_cursor()
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
-    dt = date.today() - timedelta(hours=5) + timedelta(days=1) # adjust timezone
+    dt = datetime.now() - timedelta(hours=5) + timedelta(days=1) # adjust timezone
 
     print("Checking schedule for %r" % dt)
 
