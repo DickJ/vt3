@@ -236,9 +236,17 @@ if __name__ == '__main__':
             send_all_texts(cur, dt)
         # If it gets too late and the schedule hasn't been published, send out
         # a text. But only do this once, so let's use 1930L == 0030UTC
-        # TODO: What about DST?
+        # TODO: What about when DST ends?
         elif not sched and time(0, 29, 0) < datetime.now().time() < time(0, 59, 0):
-            pass
+            client =  TwilioRestClient(os.environ["TWILIO_ACCOUNT_SID"],
+                                       os.environ["TWILIO_AUTH_TOKEN"])
+
+            cur.execute("SELECT phone FROM verified;")
+            msg = "The schedule has not been published yet. Please call the " \
+                  "SDO at (850)623-7323 for tomorrow's schedule."
+            for phone in cur.fetchall():
+                client.messages.create(body=msg, to=phone, from_='+17089288210')
+
     except AttributeError as e:
         print(e)
         print("Schedule not yet published")
