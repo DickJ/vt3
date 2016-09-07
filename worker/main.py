@@ -222,8 +222,9 @@ if __name__ == '__main__':
     tomorrow = datetime.now() - timedelta(hours=5) + timedelta(days=1) # adjust timezone
 
     if tomorrow.weekday() == 4: # If it is Friday
-        dates = [tomorrow, tomorrow+timedelta(days=1), tomorrow+timedelta(days=2)]
-
+        dates = (tomorrow, tomorrow+timedelta(days=1), tomorrow+timedelta(days=2))
+    else:
+        dates = (tomorrow, )
 
     for dt in dates:
         print("Checking schedule for %r" % tomorrow)
