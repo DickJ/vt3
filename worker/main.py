@@ -170,16 +170,17 @@ def generate_message(user, data):
         A str containing the body of the text message to be sent.
     """
     type_of_day = tuple([d[1] for d in data])
-    msg = ''
+    msg = '%s: ' % data[0][10]
 
     if len(type_of_day) == 0:
-        msg = "You are not scheduled for anything tomorrow"
+        msg = "You are not scheduled for anything on %s" % data[0][10]
     else:
         datadict = []
         for d in data:
             datadict.append({'type': d[1], 'brief': d[2], 'edt': d[3],
                              'rtb': d[4], 'instructor': d[5], 'student': d[6],
-                             'event': d[7], 'remarks': d[8], 'location': d[9]})
+                             'event': d[7], 'remarks': d[8], 'location': d[9],
+                             'date': d[10]})
 
         for event in datadict:
             msg = ''.join((msg, '%s, ' % (event['event'])))
@@ -218,40 +219,48 @@ if __name__ == '__main__':
     # Define Vars
     conn, cur = helpers.get_db_conn_and_cursor()
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
-    dt = datetime.now() - timedelta(hours=5) + timedelta(days=1) # adjust timezone
+    tomorrow = datetime.now() - timedelta(hours=5) + timedelta(days=1) # adjust timezone
 
-    print("Checking schedule for %r" % dt)
+    if tomorrow.weekday() == 4: # If it is Friday
+        dates = [tomorrow, tomorrow+timedelta(days=1), tomorrow+timedelta(days=2)]
 
-    # Download Schedule
-    try:
-        sched = process_raw_schedule(get_schedule_page(url, dt))
 
-        # If schedule has been posted on cnatra or uploaded to postgress yet
-        if sched and not sched_uploaded(cur, dt):
-            #TODO What we insert will change over weekends
-            insert_in_pg(cur, sched, dt)
-            #TODO delete old will change over weekends
-            delete_old_sched(cur, dt - timedelta(days=2))
-            conn.commit()
-            send_all_texts(cur, dt)
-        # If it gets too late and the schedule hasn't been published, send out
-        # a text. But only do this once, so let's use 1930L == 0030UTC
-        # TODO: What about when DST ends?
-        elif not sched and time(0, 29, 0) < datetime.now().time() < time(0, 59, 0):
-            client =  TwilioRestClient(os.environ["TWILIO_ACCOUNT_SID"],
-                                       os.environ["TWILIO_AUTH_TOKEN"])
+    for dt in dates:
+        print("Checking schedule for %r" % tomorrow)
 
-            cur.execute("SELECT phone FROM verified;")
-            msg = "The schedule has not been published yet. Please call the " \
-                  "SDO at (850)623-7323 for tomorrow's schedule."
-            for phone in cur.fetchall():
-                client.messages.create(body=msg, to=phone, from_='+17089288210')
+        # Download Schedule
+        try:
+            sched = process_raw_schedule(get_schedule_page(url, dt))
 
-    except AttributeError as e:
-        print(e)
-        print("Schedule not yet published")
-    finally:
-        cur.close()
-        conn.close()
+            # If schedule has been posted on cnatra or uploaded to postgress yet
+            if sched and not sched_uploaded(cur, dt):
+                #TODO What we insert will change over weekends
+                insert_in_pg(cur, sched, dt)
+                if dt.weekday() == 0:
+                    delete_old_sched(cur, dt - timedelta(days=2))
+                    delete_old_sched(cur, dt - timedelta(days=3))
+                elif dt.weekday not in (5, 6):
+                    delete_old_sched(cur, dt - timedelta(days=2))
+                conn.commit()
+                send_all_texts(cur, dt)
+            # If it gets too late and the schedule hasn't been published, send out
+            # a text. But only do this once, so let's use 1930L == 0030UTC
+            # TODO: What about when DST ends?
+            elif not sched and time(0, 29, 0) < datetime.now().time() < time(0, 59, 0):
+                client =  TwilioRestClient(os.environ["TWILIO_ACCOUNT_SID"],
+                                           os.environ["TWILIO_AUTH_TOKEN"])
 
-        print("Worker exiting")
+                cur.execute("SELECT phone FROM verified;")
+                msg = "The schedule has not been published yet. Please call the " \
+                      "SDO at (850)623-7323 for tomorrow's schedule."
+                for phone in cur.fetchall():
+                    client.messages.create(body=msg, to=phone, from_='+17089288210')
+
+        except AttributeError as e:
+            print(e)
+            print("Schedule not yet published")
+
+    cur.close()
+    conn.close()
+
+    print("Worker exiting")
