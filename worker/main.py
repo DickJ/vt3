@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
 from worker import helpers
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import logging
+import os
 import re
 from urllib import request, parse
 import ssl
@@ -142,9 +143,8 @@ def send_all_texts(cur, dt):
 
     Consider running a join to elminiate multiple calls to Postgres
     """
-    account_sid = None
-    auth_token = None
-    client = TwilioRestClient(account_sid, auth_token)
+    client = TwilioRestClient(os.environ["TWILIO_ACCOUNT_SID"],
+                              os.environ["TWILIO_AUTH_TOKEN"])
 
     cur.execute("SELECT lname, fname, phone FROM verified")
     all_users = [(str(x[0]+', '+x[1]), x[2]) for x in cur.fetchall()]
@@ -212,6 +212,7 @@ def generate_message(user, data):
 
     return msg
 
+
 if __name__ == '__main__':
     print("Starting Worker")
     # Define Vars
@@ -233,7 +234,11 @@ if __name__ == '__main__':
             delete_old_sched(cur, dt - timedelta(days=2))
             conn.commit()
             send_all_texts(cur, dt)
-            # Update schedule to not run until tomorrow
+        # If it gets too late and the schedule hasn't been published, send out
+        # a text. But only do this once, so let's use 1930L == 0030UTC
+        # TODO: What about DST?
+        elif not sched and time(0, 29, 0) < datetime.now().time() < time(0, 59, 0):
+            pass
     except AttributeError as e:
         print(e)
         print("Schedule not yet published")
