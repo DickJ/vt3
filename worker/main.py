@@ -221,7 +221,7 @@ if __name__ == '__main__':
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
     tomorrow = datetime.now() - timedelta(hours=5) + timedelta(days=1) # adjust timezone
 
-    if tomorrow.weekday() == 4: # If it is Friday
+    if tomorrow.weekday() == 5: # If it is Friday and we're looking for Sat's sched
         dates = (tomorrow, tomorrow+timedelta(days=1), tomorrow+timedelta(days=2))
     else:
         dates = (tomorrow, )
@@ -240,7 +240,8 @@ if __name__ == '__main__':
                 if dt.weekday() == 0:
                     delete_old_sched(cur, dt - timedelta(days=2))
                     delete_old_sched(cur, dt - timedelta(days=3))
-                elif dt.weekday not in (5, 6):
+                    delete_old_sched(cur, dt - timedelta(days=4))
+                elif dt.weekday not in (6, 0):
                     delete_old_sched(cur, dt - timedelta(days=2))
                 conn.commit()
                 send_all_texts(cur, dt)
