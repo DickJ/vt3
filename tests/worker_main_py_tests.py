@@ -8,7 +8,8 @@ def test_generate_message():
                  ]
 
     for name, data, answer in test_data:
-        if main.generate_message(name, data) != answer:
+        #TODO Fix date
+        if main.generate_message(name, data, '') != answer:
             return False
 
     return True

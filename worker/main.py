@@ -154,11 +154,11 @@ def send_all_texts(cur, dt):
         cur.execute("SELECT * FROM schedule WHERE date=%s and (instructor LIKE %s or student LIKE %s);",
                     [dt.strftime("%B %-d"), ''.join(('%',user[0],'%')), ''.join(('%',user[0],'%'))])
 
-        client.messages.create(body=generate_message(user, cur.fetchall()),
+        client.messages.create(body=generate_message(user, cur.fetchall(), dt.strftime('%B %-d')),
                                to=user[1], from_='+17089288210')
 
 
-def generate_message(user, data):
+def generate_message(user, data, dt):
     """
 
     Params:
@@ -170,7 +170,7 @@ def generate_message(user, data):
         A str containing the body of the text message to be sent.
     """
     type_of_day = tuple([d[1] for d in data])
-    msg = '%s: ' % data[0][10]
+    msg = '%s: ' % dt
 
     if len(type_of_day) == 0:
         msg = "You are not scheduled for anything on %s" % data[0][10]
