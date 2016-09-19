@@ -20,17 +20,22 @@ def sched_uploaded(c, d):
     Returns:
         True if the date "dt" has already been processed, else returns False
     """
+    logging.info({'func': 'sched_uploaded', 'msg': 'Checking if schedule has been processed' })
     c.execute("SELECT id FROM schedule WHERE date=%s", [d.strftime("%B %-d")])
     return bool(c.fetchone())
+
 
 def get_schedule_page(url, dt):
     """
     """
+    logging.debug({'func': 'get_schedule_page', 'url': url, 'dt': dt})
+    logging.info({'func': 'get_schedule_page', 'msg': 'Downloading Page'})
     context = ssl._create_unverified_context()
     f = request.urlopen(url, context=context)
     soup = BeautifulSoup(f, "lxml")
 
     # Retrieve the page for the proper date
+    logging.info({'func': 'get_schedule_page', 'msg': 'Opening correct date'})
     calvar = soup.find("a", {"title": dt.strftime("%B %-d")}).get('href')
     et, ea = calvar.lstrip('javascript:__doPostBack(').rstrip(')').split(',')
     et = et.strip("'")
@@ -48,6 +53,7 @@ def get_schedule_page(url, dt):
     soup = BeautifulSoup(request.urlopen(url, encodedDate, context=context), "lxml")
 
     # Now that we have the proper date, retrieve the schedule
+    logging.info({'func': 'get_schedule_page', 'msg': 'Downloading schedule'})
     viewstate = soup.findAll("input", {"type": "hidden", "name": "__VIEWSTATE"})
     eventvalidation = soup.findAll("input", {"type": "hidden",
                                              "name": "__EVENTVALIDATION"})
@@ -63,7 +69,17 @@ def get_schedule_page(url, dt):
 
 
 def process_raw_schedule(sp):
+    """
+    Convert the daily schedule from bs4 to a list of dicts
+
+    Params:
+        sp: (BeautifulSoup) bs4 containing the daily schedule
+
+    Returns:
+        the daily schedule processed into a list of dicts
+    """
     #TODO verify columns in case of underlying page change
+    logging.debug({'func': 'process_raw_schedule'})
     daily_sched = []
     try:
         raw_data = sp.find("table", {'id': 'dgEvents'}).findAll('tr')
@@ -85,6 +101,7 @@ def process_raw_schedule(sp):
                                 "location": d[10].text
                                 })
     except AttributeError:
+        logging.info({'func': 'process_raw_schedule', 'msg': 'Schedule not yet published'})
         # Schedule not yet published
         pass
     return daily_sched
@@ -101,6 +118,7 @@ def insert_in_pg(cr, s, d):
 
     Returns: None
     """
+    logging.debug({'func': 'insert_ing_pg', 'cr': cr, 's': s, 'd': d})
     for row in s:
         cr.execute("INSERT INTO schedule (type, brief, edt, rtb, "
                     "instructor, student, event, remarks, location, date) "
@@ -127,6 +145,7 @@ def delete_old_sched(cur, dt):
 
     Returns: None
     """
+    logging.debug({'func': 'delete_old_sched', 'cur': cur, 'dt': dt})
     cur.execute("DELETE FROM schedule WHERE date = %s",
                 [dt.strftime('%B %-d')])
 
@@ -143,6 +162,8 @@ def send_all_texts(cur, dt):
 
     Consider running a join to elminiate multiple calls to Postgres
     """
+    logging.debug({'func': 'send_all_texts', 'dt': dt})
+
     client = TwilioRestClient(os.environ["TWILIO_ACCOUNT_SID"],
                               os.environ["TWILIO_AUTH_TOKEN"])
 
@@ -150,6 +171,7 @@ def send_all_texts(cur, dt):
     all_users = [(str(x[0]+', '+x[1]), x[2]) for x in cur.fetchall()]
 
     for user in all_users:
+        logging.info({'func': 'send_all_texts', 'user': user})
         # Ugly SQL, but this just says "Find user's schedule for a date'
         cur.execute("SELECT * FROM schedule WHERE date=%s and (instructor LIKE %s or student LIKE %s);",
                     [dt.strftime("%B %-d"), ''.join(('%',user[0],'%')), ''.join(('%',user[0],'%'))])
@@ -169,18 +191,20 @@ def generate_message(user, data, dt):
     Returns:
         A str containing the body of the text message to be sent.
     """
+    logging.info({'func': 'generate_message', 'user': user, 'data': data, 'dt': dt})
+
     type_of_day = tuple([d[1] for d in data])
     msg = '%s: ' % dt
 
     if len(type_of_day) == 0:
-        msg = "You are not scheduled for anything on %s" % data[0][10]
+        msg = "You are not scheduled for anything on %s" % dt
     else:
         datadict = []
         for d in data:
             datadict.append({'type': d[1], 'brief': d[2], 'edt': d[3],
                              'rtb': d[4], 'instructor': d[5], 'student': d[6],
                              'event': d[7], 'remarks': d[8], 'location': d[9],
-                             'date': d[10]})
+                             'date': dt})
 
         for event in datadict:
             msg = ''.join((msg, '%s, ' % (event['event'])))
@@ -211,11 +235,14 @@ def generate_message(user, data, dt):
             msg = ''.join((msg, '; '))
         msg = msg.rstrip('; ') # Remove '; ' from end of message
 
+    logging.info(
+        {'func': 'generate_message', 'user': user, 'msg': msg})
     return msg
 
 
 if __name__ == '__main__':
-    print("Starting Worker")
+    logging.basicConfig(level=logging.DEBUG)
+    logging.info({'func': 'main', 'msg': "Starting Worker"})
     # Define Vars
     conn, cur = helpers.get_db_conn_and_cursor()
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
@@ -226,8 +253,10 @@ if __name__ == '__main__':
     else:
         dates = (tomorrow, )
 
+    logging.info({'func': 'main', 'dates': dates, 'msg': 'Dates being processed by worker'})
+
     for dt in dates:
-        print("Checking schedule for %r" % tomorrow)
+        logging.info({'func': 'main', 'msg': "Checking schedule for %r" % tomorrow})
 
         # Download Schedule
         try:
@@ -235,13 +264,14 @@ if __name__ == '__main__':
 
             # If schedule has been posted on cnatra or uploaded to postgress yet
             if sched and not sched_uploaded(cur, dt):
-                #TODO What we insert will change over weekends
                 insert_in_pg(cur, sched, dt)
-                if dt.weekday() == 0:
+                if dt.weekday() == 1: # Processing Monday's Schedule
+                    logging.debug({'func': 'main', 'msg': 'Deleting Fri, Sat, Sun schedule from database'})
                     delete_old_sched(cur, dt - timedelta(days=2))
                     delete_old_sched(cur, dt - timedelta(days=3))
                     delete_old_sched(cur, dt - timedelta(days=4))
-                elif dt.weekday not in (6, 0):
+                elif dt.weekday not in (6, 0): # If it's Sat or Sun (checking sched for Sun or Mon)
+                    logging.debug({'func': 'main', 'msg': "Deleting yesterday's schedule from database"})
                     delete_old_sched(cur, dt - timedelta(days=2))
                 conn.commit()
                 send_all_texts(cur, dt)
@@ -249,6 +279,7 @@ if __name__ == '__main__':
             # a text. But only do this once, so let's use 1930L == 0030UTC
             # TODO: What about when DST ends?
             elif not sched and time(0, 29, 0) < datetime.now().time() < time(0, 59, 0):
+                logging.warning({'func': 'main', 'msg': 'Schedule was not published by 0100Z'})
                 client =  TwilioRestClient(os.environ["TWILIO_ACCOUNT_SID"],
                                            os.environ["TWILIO_AUTH_TOKEN"])
 
@@ -259,10 +290,10 @@ if __name__ == '__main__':
                     client.messages.create(body=msg, to=phone, from_='+17089288210')
 
         except AttributeError as e:
-            print(e)
-            print("Schedule not yet published")
+            logging.debug({'func': 'main', 'error': e})
+            logging.info({'func': 'main', 'msg': "Schedule not yet published"})
 
     cur.close()
     conn.close()
 
-    print("Worker exiting")
+    logging.info({'func': 'main', 'msg': "Worker exiting"})
