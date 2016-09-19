@@ -1,8 +1,9 @@
-import random
-from flask import render_template, flash, redirect
-from twilio import TwilioRestException
 from app import app, helpers
 from app.forms import SignupForm, UnsubscribeForm
+from flask import render_template, flash, redirect
+import logging
+import random
+from twilio import TwilioRestException
 #from misc.twilio_test import TwilioRestClient
 from twilio.rest import TwilioRestClient
 
@@ -25,6 +26,9 @@ def index():
             # If phone number does not already exist as a verified user
             cur.execute('SELECT * FROM verified WHERE phone=%s;', [phone])
             if not cur.fetchone():
+                logging.info({'func': 'index', 'fname': form.fname.data ,
+                              'lname': form.lname.data, 'phone': phone,
+                              'msg': 'user signup'})
                 # If phone number does not already exist as an unverified user
                 cur.execute("SELECT * FROM unverified WHERE phone=%s;", [phone])
                 if not cur.fetchone():
@@ -122,6 +126,8 @@ def unsubscribe():
 
 @app.route('/unsubscribe/<confcode>')
 def verify_unsubscribe(confcode):
+    logging.debug({'func': 'verify_unsubscribe', 'confcode': confcode})
+
     conn, cur = helpers.get_db_conn_and_cursor(app.config)
 
     cur.execute("SELECT (phone) FROM unsubscribe WHERE confcode=%s", [confcode])
@@ -130,8 +136,12 @@ def verify_unsubscribe(confcode):
         cur.execute('DELETE FROM verified WHERE phone=%s', [d[0]])
         cur.execute('DELETE FROM unsubscribe WHERE phone=%s', [d[0]])
         conn.commit()
+        logging.info({'func': 'verify_unsubscribe', 'phone': d[0],
+                      'msg': 'successfully unsubscribed'})
         msg = "You have been successfully unsubscribed."
     else:
+        logging.info({'func': 'verify_unsubscribe', 'confcode': confcode,
+                      'msg': 'invalid unsubscribe code'})
         msg = "ERROR: The supplied confirmation code is not valid."
 
     cur.close()
@@ -141,6 +151,7 @@ def verify_unsubscribe(confcode):
 
 @app.route('/verify/<confcode>')
 def verify(confcode):
+    logging.debug({'func': 'verify', 'confcode': confcode})
     conn, cur = helpers.get_db_conn_and_cursor(app.config)
 
     cur.execute(
@@ -159,8 +170,12 @@ def verify(confcode):
         msg = "Congratulations! You have successfully been signed up. You " \
               "will begin receiving messages at the next run."
         helpers.welcome_message(d[0], ', '.join((d[1], d[2])))
+        logging.info({'func': 'verify', 'fname':d[2], 'lname': d[1],
+                      'phone': d[0], 'msg': 'signup confirmation successful'})
 
     else:
+        logging.info({'func': 'verify', 'confcode': confcode,
+                       'msg': 'invalide confirmation code'})
         msg = "ERROR: The supplied confirmation code is not valid."
 
     conn.commit()
