@@ -4,7 +4,7 @@ import sendgrid
 from sendgrid.helpers.mail import *
 
 
-class TextClient():
+class TextClient:
     def __init__(self, debug=False):
         self.debug = debug
         self.sg = sendgrid.SendGridAPIClient(
