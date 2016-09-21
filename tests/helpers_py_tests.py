@@ -1,7 +1,11 @@
 from app import helpers
+import config
 
 
 def test_is_valid_number():
+    """
+    Not the most robust test, but it will do for now
+    """
     valid_numbers = ['8505555555', '18505555555', '(850)555-5555',
                      '1(850)555-5555', '850.555.5555']
     invalid_numbers = ['(123)555-5555', '34-567-8912', '555-5555']
@@ -15,21 +19,32 @@ def test_is_valid_number():
     return True
 
 def test_sign_up_user():
-    v_conf_code = 11111111111111111111111111111111111111
-    inv_conf_code = 22222222222222222222222222222222222222
-    valid = []
-    invalid = []
+    passes_test = False
 
-    for i in valid:
-        pass
-    for i in invalid:
-        pass
+    conn, cur = helpers.get_db_conn_and_cursor({'PG_URL': config.PG_URL})
+    phone = '+17085555555'
+    provider = 'verizon'
+    lname = 'Doe'
+    fname = 'John'
+    confcode = 11111111111111111111111111111111111111
 
-    # DELETE TEST USERS
+    helpers.sign_up_user(cur, phone, provider, lname, fname, confcode)
+    conn.commit()
+
+    cur.execute('SELECT phone, fname, lname, provider FROM unverified WHERE phone=%s;', [phone])
+    if cur.fetchall() == [(phone, fname, lname, provider)]:
+        passes_test = True
+    cur.execute('DELETE FROM unverified WHERE phone = %s;', [phone])
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return passes_test
 
 
 if __name__ == '__main__':
-    tests = [test_is_valid_number]
+    tests = [test_sign_up_user]
 
     for test in tests:
         try:

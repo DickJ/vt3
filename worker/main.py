@@ -1,12 +1,12 @@
 from bs4 import BeautifulSoup
-from worker import helpers
+from classes.TextClient import TextClient
 from datetime import datetime, timedelta, time
 import logging
 import os
 import re
-from urllib import request, parse
 import ssl
-from twilio.rest import TwilioRestClient
+from urllib import request, parse
+from worker import helpers
 
 
 def sched_uploaded(c, d):
@@ -164,11 +164,10 @@ def send_all_texts(cur, dt):
     """
     logging.debug({'func': 'send_all_texts', 'dt': dt})
 
-    client = TwilioRestClient(os.environ["TWILIO_ACCOUNT_SID"],
-                              os.environ["TWILIO_AUTH_TOKEN"])
+    client = TextClient()
 
-    cur.execute("SELECT lname, fname, phone FROM verified")
-    all_users = [(str(x[0]+', '+x[1]), x[2]) for x in cur.fetchall()]
+    cur.execute("SELECT lname, fname, phone, provider FROM verified")
+    all_users = [(str(x[0]+', '+x[1]), x[2], x[3]) for x in cur.fetchall()]
 
     for user in all_users:
         logging.info({'func': 'send_all_texts', 'user': user})
@@ -176,8 +175,8 @@ def send_all_texts(cur, dt):
         cur.execute("SELECT * FROM schedule WHERE date=%s and (instructor LIKE %s or student LIKE %s);",
                     [dt.strftime("%B %-d"), ''.join(('%',user[0],'%')), ''.join(('%',user[0],'%'))])
 
-        client.messages.create(body=generate_message(user, cur.fetchall(), dt.strftime('%B %-d')),
-                               to=user[1], from_='+17089288210')
+        msg = generate_message(user, cur.fetchall(), dt.strftime('%B %-d'))
+        response = client.send_message(user[1], user[2], dt.strftime('%B %-d'), msg)
 
 
 def generate_message(user, data, dt):
@@ -191,20 +190,20 @@ def generate_message(user, data, dt):
     Returns:
         A str containing the body of the text message to be sent.
     """
+    # TODO Change format of texts so that it is like [1] event one [2] event two ...
     logging.info({'func': 'generate_message', 'user': user, 'data': data, 'dt': dt})
-
+    msg = ''
     type_of_day = tuple([d[1] for d in data])
-    msg = '%s: ' % dt
 
     if len(type_of_day) == 0:
-        msg = "You are not scheduled for anything on %s" % dt
+        msg = "You are not scheduled for anything"
     else:
         datadict = []
         for d in data:
             datadict.append({'type': d[1], 'brief': d[2], 'edt': d[3],
                              'rtb': d[4], 'instructor': d[5], 'student': d[6],
                              'event': d[7], 'remarks': d[8], 'location': d[9],
-                             'date': dt})
+                             })
 
         for event in datadict:
             msg = ''.join((msg, '%s, ' % (event['event'])))
@@ -280,13 +279,13 @@ if __name__ == '__main__':
             # TODO: What about when DST ends?
             elif not sched and time(0, 29, 0) < datetime.now().time() < time(0, 59, 0):
                 logging.warning({'func': 'main', 'msg': 'Schedule was not published by 0100Z'})
-                client =  TwilioRestClient(os.environ["TWILIO_ACCOUNT_SID"],
-                                           os.environ["TWILIO_AUTH_TOKEN"])
+                client = TextClient()
 
-                cur.execute("SELECT phone FROM verified;")
+                cur.execute("SELECT phone, provider FROM verified;")
                 msg = "The schedule has not been published yet. Please call the " \
                       "SDO at (850)623-7323 for tomorrow's schedule."
-                for phone in cur.fetchall():
+                for phone, provider in cur.fetchall():
+                    client.send_message(phone, provider, dt, msg)
                     client.messages.create(body=msg, to=phone, from_='+17089288210')
 
         except AttributeError as e:

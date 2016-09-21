@@ -1,11 +1,9 @@
 from app import app, helpers
 from app.forms import SignupForm, UnsubscribeForm
+from classes.TextClient import TextClient
 from flask import render_template, flash, redirect
 import logging
 import random
-from twilio import TwilioRestException
-#from misc.twilio_test import TwilioRestClient
-from twilio.rest import TwilioRestClient
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -28,6 +26,7 @@ def index():
             if not cur.fetchone():
                 logging.info({'func': 'index', 'fname': form.fname.data ,
                               'lname': form.lname.data, 'phone': phone,
+                              'provider': form.provider.data,
                               'msg': 'user signup'})
                 # If phone number does not already exist as an unverified user
                 cur.execute("SELECT * FROM unverified WHERE phone=%s;", [phone])
@@ -35,21 +34,19 @@ def index():
                     # Add user to unverified signups table
                     confcode = random.getrandbits(128)
                     flashmsg = helpers.sign_up_user(cur, phone,
+                                                    form.provider.data,
                                                     form.lname.data.upper(),
                                                     form.fname.data.upper(),
                                                     confcode)
 
-                    # Send Text Message via Twilio
-                    smstxt = "Welcome to VT-3 Notifications. Please click the link to confirm your registration. %s%s%d" \
+                    # Send Text Message via SendBox
+                    subject = 'Welcome to VT-3 Notifications'
+                    smstxt = "Please click the link to confirm your registration. %s%s%d" \
                              % (app.config['BASE_URL'], '/verify/', confcode)
-                    account_sid = app.config['TWILIO_ACCOUNT_SID']
-                    auth_token = app.config['TWILIO_AUTH_TOKEN']
-                    client = TwilioRestClient(account_sid, auth_token)
-                    try:
-                        message = client.messages.create(body=smstxt, to=phone,
-                                                         from_='+17089288210')
-                    except TwilioRestException as e:
-                        print(e)
+                    client = TextClient(debug=app.config['DEBUG'])
+                    response = client.send_message(phone, form.provider.data,
+                                                  subject, smstxt)
+
 
                 # TODO Should I resend a new confirmation code here?
                 else:
@@ -88,23 +85,19 @@ def unsubscribe():
         print(phone)
         if phone:
             # If phone number does not already exist as a verified user
-            cur.execute('SELECT * FROM verified WHERE phone=%s AND fname=%s and lname=%s;',
+            cur.execute('SELECT provider FROM verified WHERE phone=%s AND fname=%s and lname=%s;',
                         [phone, form.fname.data.upper(), form.lname.data.upper()])
-            if cur.fetchone():
+            user = cur.fetchone()
+            if user:
                 # Process unsubscribe request
                 confcode = random.getrandbits(128)
                 flashmsg = helpers.unsubscribe_user(cur, phone, confcode)
-                smstxt = "Unsubscribe request received. Please click the link to verify. %s%s%d" \
+                subject = 'Unsubscribe request received'
+                smstxt = "Please click the link to verify. %s%s%d" \
                          % (app.config['BASE_URL'], '/unsubscribe/', confcode)
-                # Send Text Message via Twilio
-                account_sid = app.config['TWILIO_ACCOUNT_SID']
-                auth_token = app.config['TWILIO_AUTH_TOKEN']
-                client = TwilioRestClient(account_sid, auth_token)
-                try:
-                    message = client.messages.create(body=smstxt, to=phone,
-                                                     from_='+17089288210')
-                except TwilioRestException as e:
-                    print(e)
+                # Send Text Message
+                tc = TextClient(debug=app.config['DEBUG'])
+                response = tc.send_message(phone, user[0], subject, smstxt)
 
                 #flash(flashmsg)
                 #return redirect('/')

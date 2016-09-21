@@ -18,6 +18,10 @@
             {% for error in form.phone.errors %}
                 <span style="color: red;">[{{ error }}]</span>
             {% endfor %}<br>
+            {{ form.provider }}
+            {% for error in form.provider.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}<br>
             <input type="submit" class="button alt" value="Sign Up">
         </p>
     </form>

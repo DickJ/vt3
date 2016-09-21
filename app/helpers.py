@@ -52,13 +52,14 @@ def get_db_conn_and_cursor(config):
 
     return conn, cur
 
-def sign_up_user(cur, phone, lname, fname, confcode):
+def sign_up_user(cur, phone, provider, lname, fname, confcode):
     """
     Adds a user to the unverified users table
 
     Params:
         cur: (psycopg2.extensions.cursor) A cursor to the database
         phone: (str) phone number in E.164 format
+        provider: (str) a wireless provider
         lname: (str) user's last name
         fname: (str) user's first name
         confcode: (int) random 128-bit code
@@ -74,8 +75,8 @@ def sign_up_user(cur, phone, lname, fname, confcode):
     assert lname != '', 'First name is blank.'
 
     cur.execute(
-        "INSERT INTO unverified (phone, lname, fname, confcode) VALUES (%s, %s, %s, %s);",
-        [phone, lname, fname, confcode]
+        "INSERT INTO unverified (phone, provider, lname, fname, confcode) VALUES (%s, %s, %s, %s, %s);",
+        [phone, provider, lname, fname, confcode]
     )
 
     return 'Signup requested for %s. You should receive a text message shortly' % (phone)
