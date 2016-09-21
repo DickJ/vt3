@@ -8,7 +8,7 @@ class TextClient():
     def __init__(self, debug=False):
         self.debug = debug
         self.sg = sendgrid.SendGridAPIClient(
-            apikey=os.environ.get('SENDGRID_API_KEY'))
+            apikey = os.environ.get('SENDGRID_API_KEY'))
         self.from_email = Email('vt3@herokuapp.com')
 
     def send_message(self, phone, provider, date, msg):
@@ -21,14 +21,15 @@ class TextClient():
         mail = Mail(self.from_email, subject, to_email, content)
 
         if self.debug:
-            logging.debug(str(mail.get()))
-            response = 'Debug'
+            response = str(mail.get())
+            logging.debug(response)
         else:
             response = self.sg.client.mail.send.post(request_body=mail.get())
 
         return response
 
-    def from_email_address(self, phone, provider):
+    @staticmethod
+    def from_email_address(phone, provider):
         """
         http://www.howtogeek.com/howto/27051/use-email-to-send-text-messages-sms-to-mobile-phones-for-free/
 
