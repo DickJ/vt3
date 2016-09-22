@@ -1,32 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-    <form action="" method="post" name="signup">
-        {{ form.hidden_tag() }}
-        <p>
-            Last Name (as it appears on the schedule):<br>
-            {{ form.lname(size=20) }}
-            {% for error in form.lname.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}<br>
-            First Name (as it appears on the schedule):<br>
-            {{ form.fname(size=20) }}
-            {% for error in form.fname.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}<br>
-            Phone Number (format: 8505551234):<br>
-            {{  form.phone(size=16) }}
-            {% for error in form.phone.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}<br>
-            {{ form.provider }}
-            {% for error in form.provider.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}<br>
-            <input type="submit" class="button alt" value="Sign Up">
-        </p>
-    </form>
-    <hr>
-    <p>
-        <a href="/unsubscribe">Click here to unsubscribe</a>
-    </p>
+<!-- Banner -->
+    <section id="banner">
+        <div class="inner">
+            <h1>VT-3 Notifications: <span>Fully<br />
+            automated schedule updates.</span></h1>
+            <ul class="actions">
+                <li><a href="/#signup" class="button alt">Get Started</a></li>
+            </ul>
+        </div>
+    </section>
+
+<!-- One -->
+    <a name=signup> </a>
+    <section id="one">
+        <div class="inner">
+            <header>
+                <h2>Sign Up For Notifications</h2>
+            </header>
+            <p>
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <ul>
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+                <form action="" method="post" name="signup">
+                    {{ form.hidden_tag() }}
+                    <p>
+                        Last Name (as it appears on the schedule):<br>
+                        {{ form.lname(size=20) }}
+                        {% for error in form.lname.errors %}
+                            <span style="color: red;">[{{ error }}]</span>
+                        {% endfor %}<br>
+                        First Name (as it appears on the schedule):<br>
+                        {{ form.fname(size=20) }}
+                        {% for error in form.fname.errors %}
+                            <span style="color: red;">[{{ error }}]</span>
+                        {% endfor %}<br>
+                        Phone Number (format: 8505551234):<br>
+                        {{  form.phone(size=16) }}
+                        {% for error in form.phone.errors %}
+                            <span style="color: red;">[{{ error }}]</span>
+                        {% endfor %}<br>
+                        {{ form.provider }}
+                        {% for error in form.provider.errors %}
+                            <span style="color: red;">[{{ error }}]</span>
+                        {% endfor %}<br>
+                        <input type="submit" class="button alt" value="Sign Up">
+                    </p>
+                </form>
+                <hr>
+            </p>
+        </div>
+    </section>
 {% endblock %}

@@ -1,6 +1,7 @@
 from flask.ext.wtf import Form
 from wtforms import StringField, SelectField
 from wtforms.validators import DataRequired, NoneOf
+from wtforms.widgets import TextArea
 
 
 class SignupForm(Form):
@@ -25,8 +26,28 @@ class SignupForm(Form):
     provider = SelectField('provider', validators=[NoneOf(('default',), message='Please select a wireless provider.') ],
                            choices=phone_providers)
 
+
 class UnsubscribeForm(Form):
     #phone = StringField('phone', validators=[Regexp('9 digits or 10 if the first is 1')])
     lname = StringField('lname', validators=[DataRequired()])
     fname = StringField('fname', validators=[DataRequired()])
     phone = StringField('phone', validators=[DataRequired()])
+
+
+class BugReportForm(Form):
+    categories = [('default', '--'),
+                  ('www', 'Website Issues'),
+                  ('signup', 'Signup/Unsubscribe Issues'),
+                  ('sms', 'Text Message Issues'),
+                  ('provider', 'Mobile Service Provider Not Listed'),
+                  ('feature', 'Feature Request'),
+                  ('other', 'Other Issue')]
+
+    name = StringField('name')
+    email = StringField('email')
+    subject = SelectField('category',
+                          validators=[NoneOf(('default',), message='Please select a category.')],
+                          choices=categories)
+    message = StringField('message',
+                          validators=[DataRequired(message="Please enter a message.")],
+                          widget=TextArea())

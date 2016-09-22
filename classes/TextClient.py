@@ -35,10 +35,9 @@ class TextClient:
 
         Params:
             phone: (str) e.164 format; ex. +12225555555
-            provider: (str)
+            provider: (str) mobile provider
 
-        Returns:
-
+        Returns: (str) email address as phone_number@sms.provider.com
         """
         sms_domains = {'alltell': 'text.wireless.alltel.com',
                        'att': 'txt.att.net',

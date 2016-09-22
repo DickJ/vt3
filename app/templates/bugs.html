@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+    <section id="main">
+        <div class="inner">
+            <header>
+                <h2>Report a Bug</h2>
+            </header>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+            <form method="post" action="#" name="bug_report">
+                {{ form.hidden_tag() }}
+                <div class="field half first">
+                    <label for="name">Name (Optional)</label>
+                    {{ form.name }}
+                    {% for error in form.name.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}<br>
+                </div>
+                <div class="field half">
+                    <label for="email">Email (optional)</label>
+                    {{ form.email }}
+                    {% for error in form.email.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}<br>
+                </div>
+                <label for="categories">Select A Category</label>
+                {% for error in form.subject.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}<br>
+                <div class="select-wrapper">
+                    {{ form.subject }}
+                </div>
+                <br>
+                <div class="field">
+                    <label for="message">Describe the Issue</label>
+                    {% for error in form.message.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}<br>
+                    {{ form.message(rows="6") }}
+                </div>
+                <ul class="actions">
+                    <li><input type="submit" value="Send Message" class="button alt" /></li>
+                </ul>
+            </form>
+        </div>
+    </section>
+{% endblock %}

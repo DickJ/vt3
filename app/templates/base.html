@@ -20,45 +20,29 @@
                     <nav id="nav">
                         <a href="/#">Home</a>
                         <a href="/#signup">Signup</a>
-                        <a href="/#bugs">Report a Bug</a>
-                        <a href="/#about">About</a>
+                        <a href="/unsubscribe">Unsubscribe</a>
+                        <a href="/bugs">Report a Bug</a>
                     </nav>
                 </div>
             </header>
             <a href="#menu" class="navPanelToggle"><span class="fa fa-bars"></span></a>
 
-        <!-- Banner -->
-            <section id="banner">
-                <div class="inner">
-                    <h1>VT-3 Notifications: <span>Fully<br />
-                    automated schedule updates.</span></h1>
-                    <ul class="actions">
-                        <li><a href="/#signup" class="button alt">Get Started</a></li>
-                    </ul>
-                </div>
-            </section>
+        {% block content %} {% endblock %}
 
-        <!-- One -->
-            <a name=signup> </a>
-            <section id="one">
-                <div class="inner">
-                    <header>
-                        <h2>Sign Up For Notifications</h2>
-                    </header>
-                    <p>
-                        {% with messages = get_flashed_messages() %}
-                            {% if messages %}
-                                <ul>
-                                {% for message in messages %}
-                                    <li>{{ message }}</li>
-                                {% endfor %}
-                                </ul>
-                            {% endif %}
-                        {% endwith %}
-                        {% block content %} {% endblock %}
-                    </p>
-                </div>
-            </section>
+        <!-- Footer -->
+			<section id="footer">
+				<div class="inner">
+                    <div class="items">
+                        <a href="/about"><strong>About</strong></a><br>
+                        <a href="https://github.com/DickJ/vt3" target="_blank">
+                            <strong>Github</strong></a><br>
+                        <a href="/disclaimer"><strong>Disclaimer</strong></a><br>
+                    </div>
+					<div class="copyright">
+						&copy; CSS/HTML design by <a href="https://templated.co/">TEMPLATED</a>
+					</div>
+				</div>
+			</section>
 
         <!-- Scripts -->
             <script src="/static/assets/js/jquery.min.js"></script>

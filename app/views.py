@@ -1,9 +1,10 @@
 from app import app, helpers
-from app.forms import SignupForm, UnsubscribeForm
+from app.forms import SignupForm, UnsubscribeForm, BugReportForm
 from classes.TextClient import TextClient
 from flask import render_template, flash, redirect
 import logging
 import random
+import sendgrid
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -67,6 +68,41 @@ def index():
         return redirect('/')
 
     return render_template("index.html", form=form)
+
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+
+@app.route('/bugs', methods=['GET', 'POST'])
+def bug_report():
+    form = BugReportForm()
+
+    if form.validate_on_submit():
+        sg = sendgrid.SendGridAPIClient(apikey=app.config['SENDGRID_API_KEY'])
+        to_email = sendgrid.helpers.mail.Email(app.config['BUG_REPORTING_EMAIL'])
+        from_email = sendgrid.helpers.mail.Email('BugReport@vt3notifications.com')
+        subject = form.subject.data
+        if not form.name.data:
+            form.name.data = 'anonymous'
+        if not form.email.data:
+            form.email.data = 'anon@ymou.se'
+        message = sendgrid.helpers.mail.Content("text/plain",
+                        ('%s (%s) \n\n %s' % (form.name.data, form.email.data,
+                                              form.message.data)))
+        mail = sendgrid.helpers.mail.Mail(from_email, subject, to_email, message)
+        response = sg.client.mail.send.post(request_body=mail.get())
+        logging.debug(response)
+        flash("Your bug report has been submitted. Thank you.")
+        return redirect('/bugs')
+
+    return render_template('bugs.html', form=form)
+
+
+@app.route('/disclaimer')
+def disclaimer():
+    return render_template('disclaimer.html')
 
 
 @app.route('/unsubscribe', methods=['GET', 'POST'])
@@ -148,14 +184,14 @@ def verify(confcode):
     conn, cur = helpers.get_db_conn_and_cursor(app.config)
 
     cur.execute(
-        "SELECT (phone, lname, fname) FROM unverified WHERE confcode=%s",
+        "SELECT (phone, lname, fname, provider) FROM unverified WHERE confcode=%s",
         [confcode])
     d = cur.fetchone()
     if d:
         d = d[0].lstrip('(').rstrip(')').split(',')
         cur.execute(
-            'INSERT INTO verified (phone, lname, fname) VALUES (%s, %s, %s)',
-            [d[0], d[1], d[2]])
+            'INSERT INTO verified (phone, lname, fname, provider) VALUES (%s, %s, %s, %s)',
+            [d[0], d[1], d[2], d[3]])
         cur.execute("DELETE FROM unverified WHERE confcode=%s", [confcode])
 
         # TODO Make an initial push message when confirmed (e.g. what if they

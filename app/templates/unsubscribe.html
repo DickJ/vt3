@@ -1,42 +1,46 @@
-{% extends "generic.html" %}
+{% extends "base.html" %}
 {% block content %}
-    <header class=""major special"><h1>Unsubscribe</h1></header>
-    <h3>Sorry to see you go.</h3>
-    {% if msg %}
-        <ul>{{ msg }}</ul>
-    {% endif %}
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
-    <form action="" method="post" name="unsubscribe">
-        {{ form.hidden_tag() }}
-        <p>
-            Last Name (as it appears on the schedule):<br>
-            {{ form.lname(size=20) }}
-            {% for error in form.lname.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}<br>
-            First Name (as it appears on the schedule):<br>
-            {{ form.fname(size=20) }}
-            {% for error in form.fname.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}<br>
-            Phone Number (format: 8505551234):<br>
-            {{  form.phone(size=16) }}
-            {% for error in form.phone.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}<br>
-            <input type="submit" class="button alt" value="unsubscribe">
+    <section id="main" >
+        <div class="inner">
+            <header class=""major special"><h1>Unsubscribe</h1></header>
+            <h3>Sorry to see you go.</h3>
+            {% if msg %}
+                <ul>{{ msg }}</ul>
+            {% endif %}
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+            <form action="" method="post" name="unsubscribe">
+                {{ form.hidden_tag() }}
+                <p>
+                    Last Name (as it appears on the schedule):<br>
+                    {{ form.lname(size=20) }}
+                    {% for error in form.lname.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}<br>
+                    First Name (as it appears on the schedule):<br>
+                    {{ form.fname(size=20) }}
+                    {% for error in form.fname.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}<br>
+                    Phone Number (format: 8505551234):<br>
+                    {{  form.phone(size=16) }}
+                    {% for error in form.phone.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}<br>
+                    <input type="submit" class="button alt" value="unsubscribe">
 
-        </p>
+                </p>
 
-    </form>
-    </p>
-    </header>
+            </form>
+            </p>
+            </header>
+        </div>
+    </section>
 {% endblock %}
