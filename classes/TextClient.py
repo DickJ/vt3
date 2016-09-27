@@ -7,8 +7,11 @@ from sendgrid.helpers.mail import *
 class TextClient:
     def __init__(self, debug=False):
         self.debug = debug
-        self.sg = sendgrid.SendGridAPIClient(
-            apikey = os.environ.get('SENDGRID_API_KEY'))
+        if debug:
+            self.sg = None
+        else:
+            self.sg = sendgrid.SendGridAPIClient(
+                apikey = os.environ.get('SENDGRID_API_KEY'))
         self.from_email = Email('vt3@herokuapp.com')
 
     def send_message(self, phone, provider, date, msg):
