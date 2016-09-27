@@ -64,8 +64,8 @@ def get_schedule_page(url, dt):
     }
     encodedFields = parse.urlencode(formData).encode('ascii')
 
-    return BeautifulSoup(request.urlopen(
-        url, encodedFields, context=context), 'lxml')
+    return BeautifulSoup(request.urlopen(url, encodedFields,
+                                         context=context), 'lxml')
 
 
 def process_raw_schedule(sp):
@@ -239,6 +239,64 @@ def generate_message(user, data, dt):
     return msg
 
 
+def send_squadron_notes(url, dt, cur):
+    """
+    """
+    logging.debug({'func': 'get_schedule_page', 'url': url, 'dt': dt})
+    logging.info({'func': 'get_schedule_page', 'msg': 'Downloading Page'})
+    context = ssl._create_unverified_context()
+    f = request.urlopen(url, context=context)
+    soup = BeautifulSoup(f, "lxml")
+
+    # Retrieve the page for the proper date
+    logging.info({'func': 'get_schedule_page', 'msg': 'Opening correct date'})
+    calvar = soup.find("a", {"title": dt.strftime("%B %-d")}).get('href')
+    et, ea = calvar.lstrip('javascript:__doPostBack(').rstrip(')').split(',')
+    et = et.strip("'")
+    ea = ea.strip("'")
+    viewstate = soup.findAll("input", {"type": "hidden", "name": "__VIEWSTATE"})
+    eventvalidation = soup.findAll("input", {"type": "hidden",
+                                             "name": "__EVENTVALIDATION"})
+    dateForm = {
+        '__EVENTTARGET': et,
+        '__EVENTARGUMENT': ea,
+        '__EVENTVALIDATION': eventvalidation[0]['value'],
+        '__VIEWSTATE': viewstate[0]['value'],
+    }
+    encodedDate = parse.urlencode(dateForm).encode('ascii')
+    soup = BeautifulSoup(request.urlopen(url, encodedDate, context=context),
+                         "lxml")
+
+    # Now that we have the proper date, retrieve the schedule
+    logging.info({'func': 'get_schedule_page', 'msg': 'Downloading schedule'})
+    viewstate = soup.findAll("input", {"type": "hidden", "name": "__VIEWSTATE"})
+    eventvalidation = soup.findAll("input", {"type": "hidden",
+                                             "name": "__EVENTVALIDATION"})
+    formData = {
+        '__EVENTVALIDATION': eventvalidation[0]['value'],
+        '__VIEWSTATE': viewstate[0]['value'],
+        'btnViewSched': 'View Schedule',
+    }
+    encodedFields = parse.urlencode(formData).encode('ascii')
+    notes_page_soup = BeautifulSoup(request.urlopen(
+        url, encodedFields, context=context), 'lxml')
+
+    tc = TextClient()
+    notes = notes_page_soup.find(id='dgCoversheet')
+
+    if notes:
+        text = re.sub(u'\xa0', ' ', notes.text.strip())
+        cur.execute("SELECT phone, provider FROM verified;")
+        for phone, provider in cur.fetchall():
+            tc.send_message(phone, provider, dt.strftime('%B %-d'), text)
+    else:
+        notes = notes_page_soup.find(id='lblNoCoversheet')
+
+    if not notes:
+        print("Neither squadron notes, nor no squadron notes message exist.")
+        raise ValueError
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logging.info({'func': 'main', 'msg': "Starting Worker"})
@@ -274,11 +332,13 @@ if __name__ == '__main__':
                     delete_old_sched(cur, dt - timedelta(days=2))
                 conn.commit()
                 send_all_texts(cur, dt)
+                send_squadron_notes(url, dt, cur)
             # If it gets too late and the schedule hasn't been published, send out
             # a text. But only do this once, so let's use 1930L == 0030UTC
             # TODO: What about when DST ends?
             elif not sched and time(0, 29, 0) < datetime.now().time() < time(0, 59, 0):
                 logging.warning({'func': 'main', 'msg': 'Schedule was not published by 0100Z'})
+                #TODO Only instantiate one TextClient in main.py
                 client = TextClient()
 
                 cur.execute("SELECT phone, provider FROM verified;")
@@ -286,7 +346,6 @@ if __name__ == '__main__':
                       "SDO at (850)623-7323 for tomorrow's schedule."
                 for phone, provider in cur.fetchall():
                     client.send_message(phone, provider, dt, msg)
-                    client.messages.create(body=msg, to=phone, from_='+17089288210')
 
         except AttributeError as e:
             logging.debug({'func': 'main', 'error': e})
