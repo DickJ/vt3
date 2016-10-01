@@ -322,14 +322,16 @@ if __name__ == '__main__':
             # If schedule has been posted on cnatra or uploaded to postgress yet
             if sched and not sched_uploaded(cur, dt):
                 insert_in_pg(cur, sched, dt)
-                if dt.weekday() == 1: # Processing Monday's Schedule
-                    logging.debug({'func': 'main', 'msg': 'Deleting Fri, Sat, Sun schedule from database'})
+                if dt.weekday() == 1:
+                    logging.debug({'func': 'main',
+                                   'msg': 'Deleting last weeks schedule from database'})
                     delete_old_sched(cur, dt - timedelta(days=2))
                     delete_old_sched(cur, dt - timedelta(days=3))
                     delete_old_sched(cur, dt - timedelta(days=4))
-                elif dt.weekday not in (6, 0): # If it's Sat or Sun (checking sched for Sun or Mon)
-                    logging.debug({'func': 'main', 'msg': "Deleting yesterday's schedule from database"})
-                    delete_old_sched(cur, dt - timedelta(days=2))
+                    delete_old_sched(cur, dt - timedelta(days=5))
+                    delete_old_sched(cur, dt - timedelta(days=6))
+                    delete_old_sched(cur, dt - timedelta(days=7))
+                    delete_old_sched(cur, dt - timedelta(days=8))
                 conn.commit()
                 send_all_texts(cur, dt)
                 send_squadron_notes(url, dt, cur)
