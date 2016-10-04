@@ -347,7 +347,7 @@ if __name__ == '__main__':
                 msg = "The schedule has not been published yet. Please call the " \
                       "SDO at (850)623-7323 for tomorrow's schedule."
                 for phone, provider in cur.fetchall():
-                    client.send_message(phone, provider, dt, msg)
+                    client.send_message(phone, provider, dt.strftime('%B %-d'), msg)
 
         except AttributeError as e:
             logging.debug({'func': 'main', 'error': e})
