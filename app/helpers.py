@@ -75,7 +75,7 @@ def sign_up_user(cur, phone, provider, lname, fname, confcode):
     assert lname != '', 'First name is blank.'
 
     cur.execute(
-        "INSERT INTO unverified (phone, provider, lname, fname, confcode) VALUES (%s, %s, %s, %s, %s);",
+        "INSERT INTO unverified (phone, provider, lname, fname, confcode, datetime) VALUES (%s, %s, %s, %s, %s, current_timestamp);",
         [phone, provider, lname, fname, confcode]
     )
 

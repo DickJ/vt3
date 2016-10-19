@@ -188,11 +188,16 @@ def verify(confcode):
         [confcode])
     d = cur.fetchone()
     if d:
+        #TODO Why am I stripping and splitting? cur.fetchone returns a tuple,
+        # not a string. ref: http://initd.org/psycopg/docs/cursor.html#fetch
         d = d[0].lstrip('(').rstrip(')').split(',')
-        cur.execute(
-            'INSERT INTO verified (phone, lname, fname, provider) VALUES (%s, %s, %s, %s)',
-            [d[0], d[1], d[2], d[3]])
-        cur.execute("DELETE FROM unverified WHERE confcode=%s", [confcode])
+
+        cur.execute("SELECT phone FROM verified WHERE phone = %s", [d[0]])
+        already_added = cur.fetchone()
+        if not already_added:
+            cur.execute(
+                'INSERT INTO verified (phone, lname, fname, provider) VALUES (%s, %s, %s, %s)',
+                [d[0], d[1], d[2], d[3]])
 
         # TODO Make an initial push message when confirmed (e.g. what if they
         # sign up at night and need tomorrows schedule)
