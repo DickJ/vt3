@@ -41,8 +41,8 @@ def index():
                                                     confcode)
 
                     # Send Text Message via SendBox
-                    subject = 'Welcome to VT-3 Notifications'
-                    smstxt = "Please click the link to confirm your registration. %s%s%d" \
+                    subject = 'VT-3 Notifications'
+                    smstxt = "Click the link to confirm. %s%s%d" \
                              % (app.config['BASE_URL'], '/verify/', confcode)
                     client = TextClient(debug=app.config['DEBUG'])
                     response = client.send_message(phone, form.provider.data,
@@ -128,8 +128,8 @@ def unsubscribe():
                 # Process unsubscribe request
                 confcode = random.getrandbits(16)
                 flashmsg = helpers.unsubscribe_user(cur, phone, confcode)
-                subject = 'Unsubscribe request received'
-                smstxt = "Please click the link to verify. %s%s%d" \
+                subject = 'VT-3 Notifications'
+                smstxt = "Click the link to unsubscribe. %s%s%d" \
                          % (app.config['BASE_URL'], '/unsubscribe/', confcode)
                 # Send Text Message
                 tc = TextClient(debug=app.config['DEBUG'])
