@@ -33,7 +33,7 @@ def index():
                 cur.execute("SELECT * FROM unverified WHERE phone=%s;", [phone])
                 if not cur.fetchone():
                     # Add user to unverified signups table
-                    confcode = random.getrandbits(128)
+                    confcode = random.getrandbits(16)
                     flashmsg = helpers.sign_up_user(cur, phone,
                                                     form.provider.data,
                                                     form.lname.data.upper(),
@@ -126,7 +126,7 @@ def unsubscribe():
             user = cur.fetchone()
             if user:
                 # Process unsubscribe request
-                confcode = random.getrandbits(128)
+                confcode = random.getrandbits(16)
                 flashmsg = helpers.unsubscribe_user(cur, phone, confcode)
                 subject = 'Unsubscribe request received'
                 smstxt = "Please click the link to verify. %s%s%d" \
