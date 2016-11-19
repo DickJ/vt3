@@ -1,10 +1,13 @@
 from app import app, helpers
-from app.forms import SignupForm, UnsubscribeForm, BugReportForm
+from app.forms import SignupForm, UnsubscribeForm, BugReportForm, HolidayPartyTickets
 from classes.TextClient import TextClient
 from flask import render_template, flash, redirect
 import logging
+import os
 import random
 import sendgrid
+from sendgrid.helpers.mail import *
+import stripe
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -217,3 +220,65 @@ def verify(confcode):
     conn.close()
 
     return render_template("verify.html", msg=msg)
+
+
+@app.route('/holiday', methods=['GET', 'POST'])
+def holiday_party():
+    form = HolidayPartyTickets()
+
+    if form.validate_on_submit():
+        # Set your secret key: remember to change this to your live secret key in production
+        # See your keys here: https://dashboard.stripe.com/account/apikeys
+        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+
+        # Get the credit card details submitted by the form
+        token = form.stripeToken.data
+
+        if form.category.data == 'mil':
+            price_per_ticket = 2500
+        elif form.category.data == 'civ':
+            price_per_ticket = 1500
+
+        price = int(price_per_ticket * int(form.tickets.data) * 1.029 + 30)
+
+
+        print("name: " + form.name.data)
+        print("email: " + form.email.data)
+        print("tickets: " + form.tickets.data)
+        print("category: " + form.category.data)
+        print("token: " + form.stripeToken.data)
+        print("price: " + str(price))
+
+        # Create a charge: this will charge the user's card
+        try:
+            charge = stripe.Charge.create(
+                amount=price,  # Amount in cents
+                currency="usd",
+                source=token,
+                description="%s %s tickets for %s" % (form.tickets.data, form.category.data, form.name.data)
+            )
+
+            sg = sendgrid.SendGridAPIClient(
+                apikey=os.environ.get('SENDGRID_API_KEY'))
+            from_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
+            to_email = Email(form.email.data)
+            subject = "2016 VT-3 Holiday Party Ticket Purchase Confirmation"
+            msg = "Thank you for purchasing your holiday party tickets. Please " \
+                  "retain this email for your records.\n" \
+                  "Name: %s\nTickets Purchased: %s\nTotal Cost: $%.2f\n" % \
+                  (form.name.data, form.tickets.data, float(price / 100))
+            content = Content("text/plain", msg)
+            mail = Mail(from_email, subject, to_email,
+                        content)  # Send as receipt
+            response1 = sg.client.mail.send.post(request_body=mail.get())
+            mail = Mail(from_email, subject, from_email, content)  # Send to me
+            response2 = sg.client.mail.send.post(request_body=mail.get())
+
+            flash('Payment successful, you will receive a confirmation email shortly.')
+
+
+        except stripe.error.CardError as e:
+            flash("Payment has been declined")
+            pass
+
+    return render_template('holiday.html', form=form)

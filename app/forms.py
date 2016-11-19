@@ -1,6 +1,6 @@
 from flask.ext.wtf import Form
 from wtforms import StringField, SelectField
-from wtforms.validators import DataRequired, NoneOf
+from wtforms.validators import DataRequired, NoneOf, Email
 from wtforms.widgets import TextArea
 
 
@@ -51,3 +51,15 @@ class BugReportForm(Form):
     message = StringField('message',
                           validators=[DataRequired(message="Please enter a message.")],
                           widget=TextArea())
+
+class HolidayPartyTickets(Form):
+    categories = [('default', '--'),
+                  ('mil', 'Military Employee'),
+                  ('civ', 'Civilian Employee')]
+    name = StringField('name', validators=[DataRequired(message='Please enter your name.')])
+    email = StringField('email', validators=[DataRequired(message='Please enter your email address.'),
+                                             Email(message='Not a valid email address')])
+    tickets = StringField('tickets', validators=[DataRequired(message='Please enter ticket quantity.')])
+    category = SelectField('category', validators=[NoneOf(('default',),
+                  message='Please select ticket type.')], choices=categories)
+    stripeToken = StringField('stripeToken')
