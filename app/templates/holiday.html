@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+    <link rel="stylesheet" href="static/assets/css/payments.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
     <script type="text/javascript">
@@ -88,8 +89,8 @@
                         </div>
                     </div>
                     <br><br>
-                    <div class="table-wrapper" width="50%">
-                        <table width="50%">
+                    <div class="table-wrapper">
+                        <table class="payment">
                             <tbody>
                                 <tr>
                                     <th>Card Number</th>
@@ -97,7 +98,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <table>
+                        <table class="payment">
                             <tbody>
                                 <tr>
                                     <th>Expiration (MM/YY)</th>
@@ -110,7 +111,7 @@
                             </tbody>
                         </table>
 
-                        <table>
+                        <table class="payment">
                             <tbody>
                                 <tr>
                                     <th>Billing Zip</th>
@@ -119,7 +120,7 @@
                             </tbody>
                         </table>
 
-                        <table>
+                        <table class="payment">
                             <thead>
                                 <tr>
                                     <th>Cost</th>
@@ -136,7 +137,7 @@
                             </tbody>
                         </table>
                         <span class="payment-errors" style="color: red"></span>
-                        <table>
+                        <table class="payment">
                             <tbody>
                                 <tr>
                                     <th><input type="submit" class="submit" value="Submit Payment"></th>
@@ -172,14 +173,14 @@
 
             //console.log(price_per_ticket);
 
-            var cost = document.getElementById('tickets').value * price_per_ticket;
-            //console.log(cost);
+            var cost = parseFloat((document.getElementById('tickets').value * price_per_ticket));
+            console.log(cost);
 
-            stripe_fee = Math.round((.029 * cost + .30)*100) / 100;
-            var total_cost = cost + stripe_fee;
+            stripe_fee = ((cost + .30)/.971 - cost).toFixed(2)
+            var total_cost = (parseFloat(cost) + parseFloat(stripe_fee)).toFixed(2);
 
-            //console.log(stripe_fee);
-            //console.log(total_cost);
+            console.log(stripe_fee);
+            console.log(total_cost);
 
             document.getElementById('cost_t').innerText = "$" + cost;
             document.getElementById("stripefee_t").innerText = "$" + stripe_fee;

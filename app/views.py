@@ -239,8 +239,10 @@ def holiday_party():
         elif form.category.data == 'civ':
             price_per_ticket = 1500
 
-        price = int(price_per_ticket * int(form.tickets.data) * 1.029 + 30)
+        cost = int(price_per_ticket * int(form.tickets.data))
+        cost = cost + 30 # $0.30 per transaction
 
+        price = int(cost / .971)
 
         print("name: " + form.name.data)
         print("email: " + form.email.data)

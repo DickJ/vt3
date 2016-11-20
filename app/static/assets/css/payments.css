@@ -1,0 +1,19 @@
+@import url(font-awesome.min.css);
+@import url("https://fonts.googleapis.com/css?family=Lato:300,400,700|Pacifico");
+
+table.payment {
+    margin: 0 0 2em 0;
+    width: 30em
+}
+
+    table.payment tbody tr {
+
+    }
+
+    table.payment td {
+
+    }
+
+    table.payment th {
+
+    }
