@@ -175,8 +175,9 @@ def send_all_texts(cur, dt):
         cur.execute("SELECT * FROM schedule WHERE date=%s and (instructor LIKE %s or student LIKE %s);",
                     [dt.strftime("%B %-d"), ''.join(('%',user[0],'%')), ''.join(('%',user[0],'%'))])
 
-        msg = generate_message(user, cur.fetchall(), dt.strftime('%B %-d'))
-        response = client.send_message(user[1], user[2], dt.strftime('%B %-d'), msg)
+        all_msg = generate_message(user, cur.fetchall(), dt.strftime('%B %-d'))
+        for msg in all_msg:
+            response = client.send_message(user[1], user[2], dt.strftime('%b %-d'), msg)
 
 
 def generate_message(user, data, dt):
@@ -190,53 +191,47 @@ def generate_message(user, data, dt):
     Returns:
         A str containing the body of the text message to be sent.
     """
-    # TODO Change format of texts so that it is like [1] event one [2] event two ...
     logging.info({'func': 'generate_message', 'user': user, 'data': data, 'dt': dt})
+    all_msg = []
     msg = ''
     type_of_day = tuple([d[1] for d in data])
 
     if len(type_of_day) == 0:
-        msg = "You are not scheduled for anything"
+        all_msg.append("You are not scheduled for anything")
     else:
-        datadict = []
         for d in data:
-            datadict.append({'type': d[1], 'brief': d[2], 'edt': d[3],
-                             'rtb': d[4], 'instructor': d[5], 'student': d[6],
-                             'event': d[7], 'remarks': d[8], 'location': d[9],
-                             })
-
-        for event in datadict:
-            msg = ''.join((msg, '%s, ' % (event['event'])))
-            if event['brief'] != u'\xa0':
-                msg = ''.join((msg, '%s, ' % event['brief']))
-            elif event['edt'] != u'\xa0':
-                msg = ''.join((msg, '%s, ' % event['edt']))
+            msg = ''.join((msg, '%s, ' % (d[7])))
+            if d[2] != u'\xa0':
+                msg = ''.join((msg, '%s, ' % d[2]))
+            elif d[3] != u'\xa0':
+                msg = ''.join((msg, '%s, ' % d[3]))
             else:
                 # TODO Raise or Report an error
                 pass
 
-            if event['instructor'] != u'\xa0' and event['student'] != u'\xa0':
-                msg = ''.join((msg, '%s/%s' % (event['instructor'], event['student'])))
-            elif event['instructor'] != u'\xa0':
-                msg = ''.join((msg, '%s' % (event['instructor'])))
-            elif event['student'] != u'\xa0':
-                msg = ''.join((msg, '%s' % (event['student'])))
+            if d[5] != u'\xa0' and d[6] != u'\xa0':
+                msg = ''.join((msg, '%s/%s' % (d[5], d[6])))
+            elif d[5] != u'\xa0':
+                msg = ''.join((msg, '%s' % (d[5])))
+            elif d[6] != u'\xa0':
+                msg = ''.join((msg, '%s' % (d[6])))
             else:
                 #TODO Raise or report an error
                 pass
 
-            if event['remarks'] != u'\xa0':
-                msg = ''.join((msg, ', %s' % event['remarks']))
+            if d[8] != u'\xa0':
+                msg = ''.join((msg, ', %s' % d[8]))
 
-            if event['location'] != u'\xa0':
-                msg = ''.join((msg, ', %s' % event['location']))
+            if d[9] != u'\xa0':
+                msg = ''.join((msg, ', %s' % d[9]))
 
-            msg = ''.join((msg, '; '))
-        msg = msg.rstrip('; ') # Remove '; ' from end of message
+            logging.info(
+                {'func': 'generate_message', 'user': user, 'msg': msg})
 
-    logging.info(
-        {'func': 'generate_message', 'user': user, 'msg': msg})
-    return msg
+            all_msg.append(msg)
+            msg = ''
+
+    return all_msg
 
 
 def send_squadron_notes(url, dt, cur):
