@@ -222,6 +222,7 @@ def verify(confcode):
     return render_template("verify.html", msg=msg)
 
 
+'''
 @app.route('/holiday', methods=['GET', 'POST'])
 def holiday_party():
     form = HolidayPartyTickets()
@@ -284,3 +285,4 @@ def holiday_party():
             pass
 
     return render_template('holiday.html', form=form)
+'''
