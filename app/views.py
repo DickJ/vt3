@@ -1,5 +1,5 @@
 from app import app, helpers
-from app.forms import SignupForm, UnsubscribeForm, BugReportForm, HolidayPartyTickets
+from app.forms import SignupForm, UnsubscribeForm, BugReportForm, HolidayPartyTickets, DuesForm
 from classes.TextClient import TextClient
 from flask import render_template, flash, redirect
 import logging
@@ -286,3 +286,32 @@ def holiday_party():
 
     return render_template('holiday.html', form=form)
 '''
+
+@app.route('/dues', methods=['GET', 'POST'])
+def pay_dues():
+    form = DuesForm()
+
+    if form.validate_on_submit():
+        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+        token = form.stripeToken.data
+        amount = form.amount.data
+        desc = {'15479': 'Landing Fees',
+                '3120': '3 Month Mess Dues',
+                '6210': '6 Month Mess Dues',
+                '9300': '9 Month Mess Dues',
+                '12389': '12 Month Mess Dues'}
+
+        try:
+            charge = stripe.Charge.create(
+                amount=int(amount),
+                currency='usd',
+                source=token,
+                description = desc[amount]
+            )
+
+            flash('Payment successful, you will receive a confirmation email shortly.')
+        except stripe.error.CardError as e:
+            flash("Payment has been declined")
+            pass
+
+    return render_template('dues.html', form=form)

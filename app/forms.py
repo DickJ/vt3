@@ -63,3 +63,7 @@ class HolidayPartyTickets(Form):
     category = SelectField('category', validators=[NoneOf(('default',),
                   message='Please select ticket type.')], choices=categories)
     stripeToken = StringField('stripeToken')
+
+class DuesForm(Form):
+    stripeToken = StringField('stripeToken')
+    amount = StringField('amount', validators=[DataRequired()])
