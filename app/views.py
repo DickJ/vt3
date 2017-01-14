@@ -315,3 +315,7 @@ def pay_dues():
             pass
 
     return render_template('dues.html', form=form)
+
+@app.route('/mugs', methods=['GET', 'POST'])
+def mugs():
+    return render_template('mugs.html')
