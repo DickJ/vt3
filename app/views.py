@@ -1,5 +1,5 @@
 from app import app, helpers
-from app.forms import SignupForm, UnsubscribeForm, BugReportForm, HolidayPartyTickets, DuesForm
+from app.forms import SignupForm, UnsubscribeForm, BugReportForm, HolidayPartyTickets, DuesForm, MugsForm
 from classes.TextClient import TextClient
 from flask import render_template, flash, redirect
 import logging
@@ -318,4 +318,52 @@ def pay_dues():
 
 @app.route('/mugs', methods=['GET', 'POST'])
 def mugs():
-    return render_template('mugs.html')
+    form = MugsForm()
+
+    if form.validate_on_submit():
+        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+        token = form.stripeToken.data
+
+        price = int(float(form.amount.data) * 100)
+
+        print("name: " + form.name.data)
+        print("email: " + form.email.data)
+        print("callsign: " + form.callsign.data)
+        print("mug_qty: " + form.mug_qty.data)
+        print("stein_qty: " + form.stein_qty.data)
+        print("branch of service: " + form.branchofservice.data)
+        print("amount: " + form.amount.data)
+
+        try:
+            charge = stripe.Charge.create(
+                amount=price,  # Amount in cents
+                currency="usd",
+                source=token,
+                description="%s mug(s)/%s stein(s) for %s" % (
+                form.mug_qty.data, form.stein_qty.data, form.name.data)
+            )
+
+            sg = sendgrid.SendGridAPIClient(
+                apikey=os.environ.get('SENDGRID_API_KEY'))
+            from_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
+            to_email = Email(form.email.data)
+            subject = "2017 VT-3 Mugs and Steins Order"
+            msg = "Thank you for purchasing your Mug(s)/Stein(s). Please " \
+                  "retain this email for your records.\n" \
+                  "Name on Glassware: %s\nMugs Purchased: %s\nSteins Purchased: %s\nTotal Cost: $%.2f\n" % \
+                  (form.callsign.data, form.mug_qty.data, form.stein_qty.data, float(form.amount.data))
+            content = Content("text/plain", msg)
+            mail = Mail(from_email, subject, to_email,
+                        content)  # Send as receipt
+            response1 = sg.client.mail.send.post(request_body=mail.get())
+            mail = Mail(from_email, subject, from_email, content)  # Send to me
+            response2 = sg.client.mail.send.post(request_body=mail.get())
+
+            flash(
+                'Payment successful, you will receive a confirmation email shortly.')
+
+        except stripe.error.CardError as e:
+            flash("Payment has been declined")
+            pass
+
+    return render_template('mugs.html', form=MugsForm())

@@ -1,5 +1,5 @@
 from flask.ext.wtf import Form
-from wtforms import StringField, SelectField
+from wtforms import StringField, SelectField, HiddenField
 from wtforms.validators import DataRequired, NoneOf, Email
 from wtforms.widgets import TextArea
 
@@ -67,3 +67,16 @@ class HolidayPartyTickets(Form):
 class DuesForm(Form):
     stripeToken = StringField('stripeToken')
     amount = StringField('amount', validators=[DataRequired()])
+
+class MugsForm(Form):
+    name = StringField('name', validators=[DataRequired(message='Please enter your name.')])
+    callsign = StringField('callsign', validators=[DataRequired(message='Please enter your name/callsign as you want it on the glassware.')])
+    email = StringField('email', validators=[DataRequired(message='Please enter your email address.'),
+                                             Email(message='Not a valid email address')])
+    qtys = [('0', '0'), ('1', '1'), ('2', '2'), ('3', '3'), ('4', '4')]
+    mug_qty = SelectField('mug_qty', validators=[DataRequired(message='Please enter mug quantity.')], choices=qtys)
+    stein_qty = SelectField('stein_qty', validators=[DataRequired(message='Please enter stein quantity.')], choices=qtys)
+    branches = [('default', '--'), ('n', 'Navy'), ('m', 'Marines'), ('cg', 'Coast Guard'), ('af', 'Air Force'), ]
+    branchofservice = SelectField('branchofservice', validators=[DataRequired(message='Please enter service branch.')], choices=branches)
+    stripeToken = StringField('stripeToken')
+    amount = HiddenField('amount')
