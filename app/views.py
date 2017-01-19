@@ -350,8 +350,8 @@ def mugs():
             subject = "2017 VT-3 Mugs and Steins Order"
             msg = "Thank you for purchasing your Mug(s)/Stein(s). Please " \
                   "retain this email for your records.\n" \
-                  "Name on Glassware: %s\nMugs Purchased: %s\nSteins Purchased: %s\nTotal Cost: $%.2f\n" % \
-                  (form.callsign.data, form.mug_qty.data, form.stein_qty.data, float(form.amount.data))
+                  "Name: %s\nName on Glassware: %s\nMugs Purchased: %s\nSteins Purchased: %s\nTotal Cost: $%.2f\n" % \
+                  (form.name.data, form.callsign.data, form.mug_qty.data, form.stein_qty.data, float(form.amount.data))
             content = Content("text/plain", msg)
             mail = Mail(from_email, subject, to_email,
                         content)  # Send as receipt
