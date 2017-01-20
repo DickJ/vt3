@@ -21,6 +21,8 @@ def is_valid_number(number):
         if the phone number is determined to be invalid by the Twilio API
 
     """
+
+    '''
     client = TwilioLookupsClient()
     try:
         response = client.phone_numbers.get(number, include_carrier_info=True)
@@ -31,6 +33,12 @@ def is_valid_number(number):
             return False
         else:
             raise e
+    '''
+
+    if re.match('\d{9}', number):
+        return "+1" + number
+    else:
+        return False
 
 def get_db_conn_and_cursor(config):
     """
