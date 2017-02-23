@@ -316,7 +316,7 @@ def pay_dues():
 
     return render_template('dues.html', form=form)
 
-'''
+
 @app.route('/mugs', methods=['GET', 'POST'])
 def mugs():
     form = MugsForm()
@@ -368,4 +368,3 @@ def mugs():
             pass
 
     return render_template('mugs.html', form=MugsForm(), stripe_pk=os.environ.get('STRIPE_PUB_KEY'))
-'''
