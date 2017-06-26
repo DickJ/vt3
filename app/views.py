@@ -1,7 +1,7 @@
 from app import app, helpers
 from app.forms import SignupForm, UnsubscribeForm, BugReportForm, HolidayPartyTickets, DuesForm, MugsForm
 from classes.TextClient import TextClient
-from flask import render_template, flash, redirect
+from flask import render_template, flash, redirect, request # request added 25 Jun
 import logging
 import os
 import random
