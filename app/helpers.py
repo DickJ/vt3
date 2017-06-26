@@ -1,8 +1,8 @@
 import psycopg2
 import random
 import re
-from twilio.rest.lookups import TwilioLookupsClient
-from twilio.rest.exceptions import TwilioRestException
+#from twilio.rest.lookups import TwilioLookupsClient
+#from twilio.rest.exceptions import TwilioRestException
 
 
 def is_valid_number(number):
