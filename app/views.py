@@ -8,6 +8,8 @@ import random
 import sendgrid
 from sendgrid.helpers.mail import *
 import stripe
+from twilio.twiml.messaging_response import MessagingResponse # 25 Jun 17
+
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -368,3 +370,25 @@ def mugs():
             pass
 
     return render_template('mugs.html', form=MugsForm(), stripe_pk=os.environ.get('STRIPE_PUB_KEY'))
+
+
+@app.route("/sms", methods=['GET', 'POST'])
+def incoming_sms():
+    """Send a dynamic reply to an incoming text message"""
+    # Get the message the user sent our Twilio number
+    body = request.values.get('Body', None)
+
+    # Start our TwiML response
+    #resp = MessagingResponse()
+
+    # Send Email via SendBox
+    sg = sendgrid.SendGridAPIClient(apikey=os.environ.get("SENDGRID_API_KEY"))
+    to_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
+    from_email = Email('DiningIn@vt3herokuapp.com')
+    subject = 'VT-3 Dining In RSVP'
+    content = Content("text/plain", body)
+    mail = Mail(from_email, subject, to_email, content)
+    response = sg.client.mail.send.post(request_body=mail.get())
+
+
+    return str(response)
