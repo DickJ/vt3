@@ -377,23 +377,18 @@ def incoming_sms():
     """Send a dynamic reply to an incoming text message"""
     # Get the message the user sent our Twilio number
     body = request.values.get('Body', None)
-    from_phone = request.values.get('From', None)
 
     # Start our TwiML response
-    resp = MessagingResponse()
+    #resp = MessagingResponse()
 
     # Send Email via SendBox
     sg = sendgrid.SendGridAPIClient(apikey=os.environ.get("SENDGRID_API_KEY"))
     to_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
     from_email = Email('DiningIn@vt3herokuapp.com')
     subject = 'VT-3 Dining In RSVP'
-
-    msg = ''.join(['Body: ', body, '\n', 'From: ', from_phone])
-
-    content = Content("text/plain", msg)
-    
+    content = Content("text/plain", body)
     mail = Mail(from_email, subject, to_email, content)
     response = sg.client.mail.send.post(request_body=mail.get())
 
 
-    return str(resp)
+    return str(response)
