@@ -23,6 +23,25 @@
                     </thead>
                     <tbody>
                         <tr>
+                            <td>Dining In Ticket</td>
+                            <td>$50.00 + $1.41 fee</td>
+                            <td>
+                                <form action="/dues" method="POST">
+                                  {{ form.hidden_tag() }}
+                                  <input type="hidden" name="amount" value="5141">
+                                  <script
+                                    src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                                    data-key="pk_test_3NqedUZkYW5OeMPG1tXQOCOV"
+                                    data-amount="5141"
+                                    data-name="$50 Landing Fees"
+                                    data-description="+$1.41 Credit Card Fee"
+                                    data-image="static/images/vt3.png"
+                                    data-locale="auto">
+                                  </script>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr>
                             <td>Landing Fees</td>
                             <td>$150.00 + $4.79 fee</td>
                             <td>
@@ -31,7 +50,7 @@
                                   <input type="hidden" name="amount" value="15479">
                                   <script
                                     src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                                    data-key="pk_live_Hj1E6oPxWFQMFSFo1O1q5C2t"
+                                    data-key="pk_test_3NqedUZkYW5OeMPG1tXQOCOV"
                                     data-amount="15479"
                                     data-name="$150 Landing Fees"
                                     data-description="+$4.79 Credit Card Fee"
@@ -50,7 +69,7 @@
                                   <input type="hidden" name="amount" value="3120">
                                   <script
                                     src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                                    data-key="pk_live_Hj1E6oPxWFQMFSFo1O1q5C2t"
+                                    data-key="pk_live_lGm77qI6A2EPB8voZy39FTg7"
                                     data-amount="3120"
                                     data-name="3 Months Dues - $30"
                                     data-description="+$1.20 Credit Card Fee"
@@ -69,7 +88,7 @@
                                   <input type="hidden" name="amount" value="6210">
                                   <script
                                     src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                                    data-key="pk_live_Hj1E6oPxWFQMFSFo1O1q5C2t"
+                                    data-key="pk_live_lGm77qI6A2EPB8voZy39FTg7"
                                     data-amount="6210"
                                     data-name="6 Months Dues - $60"
                                     data-description="+$2.10 Credit Card Fee"
@@ -88,7 +107,7 @@
                                   <input type="hidden" name="amount" value="9300">
                                   <script
                                     src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                                    data-key="pk_live_Hj1E6oPxWFQMFSFo1O1q5C2t"
+                                    data-key="pk_live_lGm77qI6A2EPB8voZy39FTg7"
                                     data-amount="9300"
                                     data-name="9 Months Dues - $90"
                                     data-description="+$3.00 Credit Card Fee"
@@ -107,7 +126,7 @@
                                   <input type="hidden" name="amount" value="12389">
                                   <script
                                     src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                                    data-key="pk_live_Hj1E6oPxWFQMFSFo1O1q5C2t"
+                                    data-key="pk_live_lGm77qI6A2EPB8voZy39FTg7"
                                     data-amount="12389"
                                     data-name="1 Year Dues - $120"
                                     data-description="+$3.89 Credit Card Fee"

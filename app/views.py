@@ -1,5 +1,5 @@
 from app import app, helpers
-from app.forms import SignupForm, UnsubscribeForm, BugReportForm, HolidayPartyTickets, DuesForm, MugsForm
+from app.forms import SignupForm, UnsubscribeForm, BugReportForm, HolidayPartyTickets, DuesForm, MugsForm, DiningInForm
 from classes.TextClient import TextClient
 from flask import render_template, flash, redirect
 import logging
@@ -287,6 +287,7 @@ def holiday_party():
     return render_template('holiday.html', form=form)
 '''
 
+
 @app.route('/dues', methods=['GET', 'POST'])
 def pay_dues():
     form = DuesForm()
@@ -299,7 +300,8 @@ def pay_dues():
                 '3120': '3 Month Mess Dues',
                 '6210': '6 Month Mess Dues',
                 '9300': '9 Month Mess Dues',
-                '12389': '12 Month Mess Dues'}
+                '12389': '12 Month Mess Dues',
+                '5141': 'Dining In Ticket'}
 
         try:
             charge = stripe.Charge.create(
