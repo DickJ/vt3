@@ -11,6 +11,7 @@ class SignupForm(Form):
                        ('boost', 'Boost Mobile'),
                        ('cricket', 'Cricket'),
                        ('metropcs', 'Metro PCS'),
+                       ('projectfi', 'Project Fi'),
                        ('sprint','Sprint'),
                        ('straighttalk', 'Straight Talk'),
                        ('tmobile', 'T-Mobile'),
@@ -52,31 +53,32 @@ class BugReportForm(Form):
                           validators=[DataRequired(message="Please enter a message.")],
                           widget=TextArea())
 
-class HolidayPartyTickets(Form):
-    categories = [('default', '--'),
-                  ('mil', 'Military Employee'),
-                  ('civ', 'Civilian Employee')]
-    name = StringField('name', validators=[DataRequired(message='Please enter your name.')])
-    email = StringField('email', validators=[DataRequired(message='Please enter your email address.'),
-                                             Email(message='Not a valid email address')])
-    tickets = StringField('tickets', validators=[DataRequired(message='Please enter ticket quantity.')])
-    category = SelectField('category', validators=[NoneOf(('default',),
-                  message='Please select ticket type.')], choices=categories)
-    stripeToken = StringField('stripeToken')
-
-class DuesForm(Form):
-    stripeToken = StringField('stripeToken')
-    amount = StringField('amount', validators=[DataRequired()])
-
-class MugsForm(Form):
-    name = StringField('name', validators=[DataRequired(message='Please enter your name.')])
-    callsign = StringField('callsign', validators=[DataRequired(message='Please enter your name/callsign as you want it on the glassware.')])
-    email = StringField('email', validators=[DataRequired(message='Please enter your email address.'),
-                                             Email(message='Not a valid email address')])
-    qtys = [('0', '0'), ('1', '1'), ('2', '2'), ('3', '3'), ('4', '4')]
-    mug_qty = SelectField('mug_qty', validators=[DataRequired(message='Please enter mug quantity.')], choices=qtys)
-    stein_qty = SelectField('stein_qty', validators=[DataRequired(message='Please enter stein quantity.')], choices=qtys)
-    branches = [('default', '--'), ('n', 'Navy'), ('m', 'Marines'), ('cg', 'Coast Guard'), ('af', 'Air Force'), ]
-    branchofservice = SelectField('branchofservice', validators=[DataRequired(message='Please enter service branch.')], choices=branches)
-    stripeToken = StringField('stripeToken')
-    amount = HiddenField('amount')
+#TODO remove all payment code
+# class HolidayPartyTickets(Form):
+#     categories = [('default', '--'),
+#                   ('mil', 'Military Employee'),
+#                   ('civ', 'Civilian Employee')]
+#     name = StringField('name', validators=[DataRequired(message='Please enter your name.')])
+#     email = StringField('email', validators=[DataRequired(message='Please enter your email address.'),
+#                                              Email(message='Not a valid email address')])
+#     tickets = StringField('tickets', validators=[DataRequired(message='Please enter ticket quantity.')])
+#     category = SelectField('category', validators=[NoneOf(('default',),
+#                   message='Please select ticket type.')], choices=categories)
+#     stripeToken = StringField('stripeToken')
+#
+# class DuesForm(Form):
+#     stripeToken = StringField('stripeToken')
+#     amount = StringField('amount', validators=[DataRequired()])
+#
+# class MugsForm(Form):
+#     name = StringField('name', validators=[DataRequired(message='Please enter your name.')])
+#     callsign = StringField('callsign', validators=[DataRequired(message='Please enter your name/callsign as you want it on the glassware.')])
+#     email = StringField('email', validators=[DataRequired(message='Please enter your email address.'),
+#                                              Email(message='Not a valid email address')])
+#     qtys = [('0', '0'), ('1', '1'), ('2', '2'), ('3', '3'), ('4', '4')]
+#     mug_qty = SelectField('mug_qty', validators=[DataRequired(message='Please enter mug quantity.')], choices=qtys)
+#     stein_qty = SelectField('stein_qty', validators=[DataRequired(message='Please enter stein quantity.')], choices=qtys)
+#     branches = [('default', '--'), ('n', 'Navy'), ('m', 'Marines'), ('cg', 'Coast Guard'), ('af', 'Air Force'), ]
+#     branchofservice = SelectField('branchofservice', validators=[DataRequired(message='Please enter service branch.')], choices=branches)
+#     stripeToken = StringField('stripeToken')
+#     amount = HiddenField('amount')

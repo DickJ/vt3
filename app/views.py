@@ -221,152 +221,150 @@ def verify(confcode):
 
     return render_template("verify.html", msg=msg)
 
-
-'''
-@app.route('/holiday', methods=['GET', 'POST'])
-def holiday_party():
-    form = HolidayPartyTickets()
-
-    if form.validate_on_submit():
-        # Set your secret key: remember to change this to your live secret key in production
-        # See your keys here: https://dashboard.stripe.com/account/apikeys
-        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-
-        # Get the credit card details submitted by the form
-        token = form.stripeToken.data
-
-        if form.category.data == 'mil':
-            price_per_ticket = 2500
-        elif form.category.data == 'civ':
-            price_per_ticket = 1500
-
-        cost = int(price_per_ticket * int(form.tickets.data))
-        cost = cost + 30 # $0.30 per transaction
-
-        price = int(cost / .971)
-
-        print("name: " + form.name.data)
-        print("email: " + form.email.data)
-        print("tickets: " + form.tickets.data)
-        print("category: " + form.category.data)
-        print("token: " + form.stripeToken.data)
-        print("price: " + str(price))
-
-        # Create a charge: this will charge the user's card
-        try:
-            charge = stripe.Charge.create(
-                amount=price,  # Amount in cents
-                currency="usd",
-                source=token,
-                description="%s %s tickets for %s" % (form.tickets.data, form.category.data, form.name.data)
-            )
-
-            sg = sendgrid.SendGridAPIClient(
-                apikey=os.environ.get('SENDGRID_API_KEY'))
-            from_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
-            to_email = Email(form.email.data)
-            subject = "2016 VT-3 Holiday Party Ticket Purchase Confirmation"
-            msg = "Thank you for purchasing your holiday party tickets. Please " \
-                  "retain this email for your records.\n" \
-                  "Name: %s\nTickets Purchased: %s\nTotal Cost: $%.2f\n" % \
-                  (form.name.data, form.tickets.data, float(price / 100))
-            content = Content("text/plain", msg)
-            mail = Mail(from_email, subject, to_email,
-                        content)  # Send as receipt
-            response1 = sg.client.mail.send.post(request_body=mail.get())
-            mail = Mail(from_email, subject, from_email, content)  # Send to me
-            response2 = sg.client.mail.send.post(request_body=mail.get())
-
-            flash('Payment successful, you will receive a confirmation email shortly.')
-
-
-        except stripe.error.CardError as e:
-            flash("Payment has been declined")
-            pass
-
-    return render_template('holiday.html', form=form)
-'''
+#TODO Remove all payment code
+# @app.route('/holiday', methods=['GET', 'POST'])
+# def holiday_party():
+#     form = HolidayPartyTickets()
+#
+#     if form.validate_on_submit():
+#         # Set your secret key: remember to change this to your live secret key in production
+#         # See your keys here: https://dashboard.stripe.com/account/apikeys
+#         stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+#
+#         # Get the credit card details submitted by the form
+#         token = form.stripeToken.data
+#
+#         if form.category.data == 'mil':
+#             price_per_ticket = 2500
+#         elif form.category.data == 'civ':
+#             price_per_ticket = 1500
+#
+#         cost = int(price_per_ticket * int(form.tickets.data))
+#         cost = cost + 30 # $0.30 per transaction
+#
+#         price = int(cost / .971)
+#
+#         print("name: " + form.name.data)
+#         print("email: " + form.email.data)
+#         print("tickets: " + form.tickets.data)
+#         print("category: " + form.category.data)
+#         print("token: " + form.stripeToken.data)
+#         print("price: " + str(price))
+#
+#         # Create a charge: this will charge the user's card
+#         try:
+#             charge = stripe.Charge.create(
+#                 amount=price,  # Amount in cents
+#                 currency="usd",
+#                 source=token,
+#                 description="%s %s tickets for %s" % (form.tickets.data, form.category.data, form.name.data)
+#             )
+#
+#             sg = sendgrid.SendGridAPIClient(
+#                 apikey=os.environ.get('SENDGRID_API_KEY'))
+#             from_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
+#             to_email = Email(form.email.data)
+#             subject = "2016 VT-3 Holiday Party Ticket Purchase Confirmation"
+#             msg = "Thank you for purchasing your holiday party tickets. Please " \
+#                   "retain this email for your records.\n" \
+#                   "Name: %s\nTickets Purchased: %s\nTotal Cost: $%.2f\n" % \
+#                   (form.name.data, form.tickets.data, float(price / 100))
+#             content = Content("text/plain", msg)
+#             mail = Mail(from_email, subject, to_email,
+#                         content)  # Send as receipt
+#             response1 = sg.client.mail.send.post(request_body=mail.get())
+#             mail = Mail(from_email, subject, from_email, content)  # Send to me
+#             response2 = sg.client.mail.send.post(request_body=mail.get())
+#
+#             flash('Payment successful, you will receive a confirmation email shortly.')
+#
+#
+#         except stripe.error.CardError as e:
+#             flash("Payment has been declined")
+#             pass
+#
+#     return render_template('holiday.html', form=form)
 
 
-@app.route('/dues', methods=['GET', 'POST'])
-def pay_dues():
-    form = DuesForm()
+# @app.route('/dues', methods=['GET', 'POST'])
+# def pay_dues():
+#     form = DuesForm()
+#
+#     if form.validate_on_submit():
+#         stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+#         token = form.stripeToken.data
+#         amount = form.amount.data
+#         desc = {'15479': 'Landing Fees',
+#                 '3120': '3 Month Mess Dues',
+#                 '6210': '6 Month Mess Dues',
+#                 '9300': '9 Month Mess Dues',
+#                 '12389': '12 Month Mess Dues',
+#                 '5141': 'Dining In Ticket'}
+#
+#         try:
+#             charge = stripe.Charge.create(
+#                 amount=int(amount),
+#                 currency='usd',
+#                 source=token,
+#                 description = desc[amount]
+#             )
+#
+#             flash('Payment successful, you will receive a confirmation email shortly.')
+#         except stripe.error.CardError as e:
+#             flash("Payment has been declined")
+#             pass
+#
+#     return render_template('dues.html', form=form)
 
-    if form.validate_on_submit():
-        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-        token = form.stripeToken.data
-        amount = form.amount.data
-        desc = {'15479': 'Landing Fees',
-                '3120': '3 Month Mess Dues',
-                '6210': '6 Month Mess Dues',
-                '9300': '9 Month Mess Dues',
-                '12389': '12 Month Mess Dues',
-                '5141': 'Dining In Ticket'}
 
-        try:
-            charge = stripe.Charge.create(
-                amount=int(amount),
-                currency='usd',
-                source=token,
-                description = desc[amount]
-            )
-
-            flash('Payment successful, you will receive a confirmation email shortly.')
-        except stripe.error.CardError as e:
-            flash("Payment has been declined")
-            pass
-
-    return render_template('dues.html', form=form)
-
-
-@app.route('/mugs', methods=['GET', 'POST'])
-def mugs():
-    form = MugsForm()
-
-    if form.validate_on_submit():
-        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-        token = form.stripeToken.data
-
-        price = int(float(form.amount.data) * 100)
-
-        print("name: " + form.name.data)
-        print("email: " + form.email.data)
-        print("callsign: " + form.callsign.data)
-        print("mug_qty: " + form.mug_qty.data)
-        print("stein_qty: " + form.stein_qty.data)
-        print("branch of service: " + form.branchofservice.data)
-        print("amount: " + form.amount.data)
-
-        try:
-            charge = stripe.Charge.create(
-                amount=price,  # Amount in cents
-                currency="usd",
-                source=token,
-                description="%s mug(s)/%s stein(s) for %s" % (
-                form.mug_qty.data, form.stein_qty.data, form.name.data)
-            )
-
-            sg = sendgrid.SendGridAPIClient(
-                apikey=os.environ.get('SENDGRID_API_KEY'))
-            from_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
-            to_email = Email(form.email.data)
-            subject = "2017 VT-3 Mugs and Steins Order"
-            msg = "Thank you for purchasing your Mug(s)/Stein(s). Please " \
-                  "retain this email for your records.\n" \
-                  "Name: %s\nName on Glassware: %s\nMugs Purchased: %s\nSteins Purchased: %s\nTotal Cost: $%.2f\n" % \
-                  (form.name.data, form.callsign.data, form.mug_qty.data, form.stein_qty.data, float(form.amount.data))
-            content = Content("text/plain", msg)
-            mail = Mail(from_email, subject, to_email,
-                        content)  # Send as receipt
-            response1 = sg.client.mail.send.post(request_body=mail.get())
-            mail = Mail(from_email, subject, from_email, content)  # Send to me
-            response2 = sg.client.mail.send.post(request_body=mail.get())
-
-            flash(
-                'Payment successful, you will receive a confirmation email shortly.')
-
-        except stripe.error.CardError as e:
-            flash("Payment has been declined")
-            pass
-
-    return render_template('mugs.html', form=MugsForm(), stripe_pk=os.environ.get('STRIPE_PUB_KEY'))
+# @app.route('/mugs', methods=['GET', 'POST'])
+# def mugs():
+#     form = MugsForm()
+#
+#     if form.validate_on_submit():
+#         stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+#         token = form.stripeToken.data
+#
+#         price = int(float(form.amount.data) * 100)
+#
+#         print("name: " + form.name.data)
+#         print("email: " + form.email.data)
+#         print("callsign: " + form.callsign.data)
+#         print("mug_qty: " + form.mug_qty.data)
+#         print("stein_qty: " + form.stein_qty.data)
+#         print("branch of service: " + form.branchofservice.data)
+#         print("amount: " + form.amount.data)
+#
+#         try:
+#             charge = stripe.Charge.create(
+#                 amount=price,  # Amount in cents
+#                 currency="usd",
+#                 source=token,
+#                 description="%s mug(s)/%s stein(s) for %s" % (
+#                 form.mug_qty.data, form.stein_qty.data, form.name.data)
+#             )
+#
+#             sg = sendgrid.SendGridAPIClient(
+#                 apikey=os.environ.get('SENDGRID_API_KEY'))
+#             from_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
+#             to_email = Email(form.email.data)
+#             subject = "2017 VT-3 Mugs and Steins Order"
+#             msg = "Thank you for purchasing your Mug(s)/Stein(s). Please " \
+#                   "retain this email for your records.\n" \
+#                   "Name: %s\nName on Glassware: %s\nMugs Purchased: %s\nSteins Purchased: %s\nTotal Cost: $%.2f\n" % \
+#                   (form.name.data, form.callsign.data, form.mug_qty.data, form.stein_qty.data, float(form.amount.data))
+#             content = Content("text/plain", msg)
+#             mail = Mail(from_email, subject, to_email,
+#                         content)  # Send as receipt
+#             response1 = sg.client.mail.send.post(request_body=mail.get())
+#             mail = Mail(from_email, subject, from_email, content)  # Send to me
+#             response2 = sg.client.mail.send.post(request_body=mail.get())
+#
+#             flash(
+#                 'Payment successful, you will receive a confirmation email shortly.')
+#
+#         except stripe.error.CardError as e:
+#             flash("Payment has been declined")
+#             pass
+#
+#     return render_template('mugs.html', form=MugsForm(), stripe_pk=os.environ.get('STRIPE_PUB_KEY'))
