@@ -37,7 +37,7 @@ class TextClient:
         http://www.howtogeek.com/howto/27051/use-email-to-send-text-messages-sms-to-mobile-phones-for-free/
 
         Params:
-            phone: (str) e.164 format; ex. +12225555555
+            phone: (str) format is 2225559999
             provider: (str) mobile provider
 
         Returns: (str) email address as phone_number@sms.provider.com
@@ -47,6 +47,7 @@ class TextClient:
                        'boost': 'myboostmobile.com',
                        'cricket': 'sms.mycricket.com',
                        'metropcs': 'mymetropcs.com',
+                       'projectfi': 'msg.fi.google.com',
                        'sprint': 'messaging.sprintpcs.com',
                        'straighttalk': 'VTEXT.COM',
                        'tmobile': 'tmomail.net',
