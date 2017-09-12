@@ -70,13 +70,13 @@ def sign_up_user(cur, phone, provider, lname, fname, confcode):
         provider: (str) a wireless provider
         lname: (str) user's last name
         fname: (str) user's first name
-        confcode: (int) random 128-bit code
+        confcode: (str) random 6-digit code
 
     Returns
         (str) a response message to the user to be flashed on the webpage
     """
     assert re.match('\+\d{9}', phone), "Invalid phone number format: %r" % phone
-    assert type(confcode) == int, "Invalid confirmation code: %r" % confcode
+    assert type(confcode) == str and len(confcode) == 6, "Invalid confirmation code: %r" % confcode
     assert type(fname == str), 'Invalid data type for first name: %r' % type(fname)
     assert type(lname == str), 'Invalid data type for last name: %r' % type(lname)
     assert fname != '', 'Last name is blank.'

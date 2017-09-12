@@ -29,6 +29,7 @@ class SignupForm(Form):
 
 
 class UnsubscribeForm(Form):
+    # TODO Add validator messages
     #phone = StringField('phone', validators=[Regexp('9 digits or 10 if the first is 1')])
     lname = StringField('lname', validators=[DataRequired()])
     fname = StringField('fname', validators=[DataRequired()])
@@ -52,3 +53,6 @@ class BugReportForm(Form):
     message = StringField('message',
                           validators=[DataRequired(message="Please enter a message.")],
                           widget=TextArea())
+
+class ConfCodeForm(Form):
+    confcode = StringField('confcode', validators=[DataRequired(message="Please enter your code.")])

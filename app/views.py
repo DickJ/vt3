@@ -1,13 +1,10 @@
 from app import app, helpers
-from app.forms import SignupForm, UnsubscribeForm, BugReportForm
+from app.forms import SignupForm, UnsubscribeForm, BugReportForm, ConfCodeForm
 from classes.TextClient import TextClient
 from flask import render_template, flash, redirect
 import logging
-import os
 import random
 import sendgrid
-from sendgrid.helpers.mail import *
-import stripe
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -16,6 +13,7 @@ def index():
     """
     Renders the backend of the index page and returns template
     """
+    #FIXME Too many levels of indentation
     form = SignupForm()
     # If the form has been submitted
     if form.validate_on_submit():
@@ -36,7 +34,15 @@ def index():
                 cur.execute("SELECT * FROM unverified WHERE phone=%s;", [phone])
                 if not cur.fetchone():
                     # Add user to unverified signups table
-                    confcode = random.getrandbits(16)
+                    while True: # Ensure there are no confcode collisions in the unverified table
+                        confcode = ''.join(str(x) for x in random.sample(range(10), 6))
+                        if not cur.execute("SELECT * FROM unverified WHERE confcode=%s", [confcode]):
+                            break
+
+                    # TODO The confcode actually gets added to the database in
+                    # the sign_up_user(), this may not be the best design
+                    # decision since it separates it from the above code that
+                    # ensures uniqueness.
                     flashmsg = helpers.sign_up_user(cur, phone,
                                                     form.provider.data,
                                                     form.lname.data.upper(),
@@ -45,8 +51,7 @@ def index():
 
                     # Send Text Message via SendBox
                     subject = 'VT-3 Notifications'
-                    smstxt = "Click the link to confirm. %s%s%d" \
-                             % (app.config['BASE_URL'], '/verify/', confcode)
+                    smstxt = 'Your confirmation code is {0}.'.format(confcode)
                     client = TextClient(debug=app.config['DEBUG'])
                     response = client.send_message(phone, form.provider.data,
                                                   subject, smstxt)
@@ -64,11 +69,13 @@ def index():
             flash('Invalid phone number. Please try again.')
             form.phone.errors.append("Invalid format.")
 
+        # TODO Should the commit be moved into helpers.sign_up_user()?
+        # -> would need to pass conn
         conn.commit()
         cur.close()
         conn.close()
 
-        return redirect('/')
+        return redirect('/verify')
 
     return render_template("index.html", form=form)
 
@@ -181,42 +188,50 @@ def verify_unsubscribe(confcode):
 
     return render_template("unsubscribe.html", form=UnsubscribeForm(), msg=msg)
 
-@app.route('/verify/<confcode>')
-def verify(confcode):
-    logging.debug({'func': 'verify', 'confcode': confcode})
-    conn, cur = helpers.get_db_conn_and_cursor(app.config)
+@app.route('/verify', methods=['GET', 'POST'])
+def verify():
+    """
 
-    cur.execute(
-        "SELECT (phone, lname, fname, provider) FROM unverified WHERE confcode=%s",
-        [confcode])
-    d = cur.fetchone()
-    if d:
-        #TODO Why am I stripping and splitting? cur.fetchone returns a tuple,
-        # not a string. ref: http://initd.org/psycopg/docs/cursor.html#fetch
-        d = d[0].lstrip('(').rstrip(')').split(',')
+    :return:
+    """
+    form = ConfCodeForm()
+    msg = ''
 
-        cur.execute("SELECT phone FROM verified WHERE phone = %s", [d[0]])
-        already_added = cur.fetchone()
-        if not already_added:
-            cur.execute(
-                'INSERT INTO verified (phone, lname, fname, provider) VALUES (%s, %s, %s, %s)',
-                [d[0], d[1], d[2], d[3]])
+    if form.validate_on_submit():
+        logging.debug({'func': 'verify', 'confcode': form.confcode.data})
 
-        # TODO Make an initial push message when confirmed (e.g. what if they
-        # sign up at night and need tomorrows schedule)
-        msg = "Congratulations! You have successfully been signed up. You " \
-              "will begin receiving messages at the next run."
-        helpers.welcome_message(d[0], ', '.join((d[1], d[2])))
-        logging.info({'func': 'verify', 'fname':d[2], 'lname': d[1],
-                      'phone': d[0], 'msg': 'signup confirmation successful'})
+        conn, cur = helpers.get_db_conn_and_cursor(app.config)
+        cur.execute("SELECT (phone, lname, fname, provider) FROM unverified WHERE confcode=%s;", [form.confcode.data])
+        d = cur.fetchone()
 
-    else:
-        logging.info({'func': 'verify', 'confcode': confcode,
-                       'msg': 'invalide confirmation code'})
-        msg = "ERROR: The supplied confirmation code is not valid."
+        if d:
+            #TODO Why am I stripping and splitting? cur.fetchone returns a tuple,
+            # not a string. ref: http://initd.org/psycopg/docs/cursor.html#fetch
+            d = d[0].lstrip('(').rstrip(')').split(',')
 
-    conn.commit()
-    cur.close()
-    conn.close()
+            cur.execute("SELECT phone FROM verified WHERE phone = %s", [d[0]])
+            already_added = cur.fetchone()
+            if not already_added:
+                cur.execute(
+                    'INSERT INTO verified (phone, lname, fname, provider) VALUES (%s, %s, %s, %s)',
+                    [d[0], d[1], d[2], d[3]])
 
-    return render_template("verify.html", msg=msg)
+            # TODO Make an initial push message when confirmed (e.g. what if they
+            # sign up at night and need tomorrows schedule)
+            msg = "Congratulations! You have successfully signed up. You " \
+                  "will begin receiving messages at the next run."
+            helpers.welcome_message(d[0], ', '.join((d[1], d[2])))
+            logging.info({'func': 'verify', 'fname':d[2], 'lname': d[1],
+                          'phone': d[0], 'msg': 'signup confirmation successful'})
+
+        else:
+            logging.info({'func': 'verify', 'confcode': form.confcode.data,
+                           'msg': 'invalide confirmation code'})
+            msg = "ERROR: The supplied confirmation code is not valid."
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    # TODO Ensure in template that if msg is a successful signup that the form is not displayed
+    return render_template("verify.html", msg=msg, form=form)
