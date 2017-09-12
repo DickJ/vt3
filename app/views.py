@@ -19,9 +19,7 @@ def index():
     # If the form has been submitted
     if form.validate_on_submit():
         u_views.run_signup_form(form)
-        # TODO BUG: /verify/ does not flash messages, signing up with the same
-        # number twice will still redirect to verify and ask for confirmation code
-        return redirect('/')
+        return redirect('/#signup')
 
     return render_template("index.html", form=form)
 
@@ -134,50 +132,41 @@ def verify_unsubscribe(confcode):
 
     return render_template("unsubscribe.html", form=UnsubscribeForm(), msg=msg)
 
-@app.route('/verify', methods=['GET', 'POST'])
-def verify():
-    """
+@app.route('/verify/<confcode>')
+def verify(confcode):
+    logging.debug({'func': 'verify', 'confcode': confcode})
+    conn, cur = u_db.get_db_conn_and_cursor(app.config)
 
-    :return:
-    """
-    form = ConfCodeForm()
-    msg = ''
+    cur.execute(
+        "SELECT (phone, lname, fname, provider) FROM unverified WHERE confcode=%s",
+        [confcode])
+    d = cur.fetchone()
+    if d:
+        #TODO Why am I stripping and splitting? cur.fetchone returns a tuple,
+        # not a string. ref: http://initd.org/psycopg/docs/cursor.html#fetch
+        d = d[0].lstrip('(').rstrip(')').split(',')
 
-    if form.validate_on_submit():
-        logging.debug({'func': 'verify', 'confcode': form.confcode.data})
+        cur.execute("SELECT phone FROM verified WHERE phone = %s", [d[0]])
+        already_added = cur.fetchone()
+        if not already_added:
+            cur.execute(
+                'INSERT INTO verified (phone, lname, fname, provider) VALUES (%s, %s, %s, %s)',
+                [d[0], d[1], d[2], d[3]])
 
-        conn, cur = u_db.get_db_conn_and_cursor(app.config)
-        cur.execute("SELECT (phone, lname, fname, provider) FROM unverified WHERE confcode=%s;", [form.confcode.data])
-        d = cur.fetchone()
+        # TODO Make an initial push message when confirmed (e.g. what if they
+        # sign up at night and need tomorrows schedule)
+        msg = "Congratulations! You have successfully been signed up. You " \
+              "will begin receiving messages at the next run."
+        logging.info({'func': 'verify', 'fname':d[2], 'lname': d[1],
+                      'phone': d[0], 'msg': 'signup confirmation successful'})
 
-        if d:
-            #TODO Why am I stripping and splitting? cur.fetchone returns a tuple,
-            # not a string. ref: http://initd.org/psycopg/docs/cursor.html#fetch
-            d = d[0].lstrip('(').rstrip(')').split(',')
+    else:
+        logging.info({'func': 'verify', 'confcode': confcode,
+                       'msg': 'invalide confirmation code'})
+        msg = "ERROR: The supplied confirmation code is not valid."
 
-            cur.execute("SELECT phone FROM verified WHERE phone = %s", [d[0]])
-            already_added = cur.fetchone()
-            if not already_added:
-                cur.execute(
-                    'INSERT INTO verified (phone, lname, fname, provider) VALUES (%s, %s, %s, %s)',
-                    [d[0], d[1], d[2], d[3]])
+    conn.commit()
+    cur.close()
+    conn.close()
 
-            # TODO Make an initial push message when confirmed (e.g. what if they
-            # sign up at night and need tomorrows schedule)
-            msg = "Congratulations! You have successfully signed up. You " \
-                  "will begin receiving messages at the next run."
-            u_views.welcome_message(d[0], ', '.join((d[1], d[2])))
-            logging.info({'func': 'verify', 'fname':d[2], 'lname': d[1],
-                          'phone': d[0], 'msg': 'signup confirmation successful'})
-
-        else:
-            logging.info({'func': 'verify', 'confcode': form.confcode.data,
-                           'msg': 'invalide confirmation code'})
-            msg = "ERROR: The supplied confirmation code is not valid."
-
-        conn.commit()
-        cur.close()
-        conn.close()
-
-    # TODO Ensure in template that if msg is a successful signup that the form is not displayed
-    return render_template("verify.html", msg=msg, form=form)
+    return render_template("verify.html/0", msg=msg)
