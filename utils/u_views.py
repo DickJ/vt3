@@ -1,8 +1,65 @@
-import psycopg2
+import logging
 import random
 import re
-from twilio.rest.lookups import TwilioLookupsClient
-from twilio.rest.exceptions import TwilioRestException
+
+import psycopg2
+from flask import flash
+
+from app import app
+from utils import u_db
+from utils.classes.TextClient import TextClient
+
+
+def run_signup_form(form):
+    # Open db connection
+    conn, cur = u_db.get_db_conn_and_cursor(app.config)
+
+    # If all data is valid
+    phone = is_valid_number(form.phone.data)
+    if phone:
+        # If phone number does not already exist as a verified user
+        cur.execute('SELECT * FROM verified WHERE phone=%s;', [phone])
+        if not cur.fetchone():
+            logging.info({'func': 'index', 'fname': form.fname.data,
+                          'lname': form.lname.data, 'phone': phone,
+                          'provider': form.provider.data,
+                          'msg': 'user signup'})
+            # If phone number does not already exist as an unverified user
+            cur.execute("SELECT * FROM unverified WHERE phone=%s;", [phone])
+            if not cur.fetchone():
+                # Add user to unverified signups table
+                confcode = random.getrandbits(16)
+                flashmsg = sign_up_user(cur, phone, form.provider.data,
+                                        form.lname.data.upper(),
+                                        form.fname.data.upper(), confcode)
+
+                # Send Text Message via SendBox
+                subject = 'VT-3 Notifications'
+                smstxt = 'Click the link to confirm. %s%s%d' \
+                         % (app.config['BASE_URL'], '/verify/', confcode)
+                client = TextClient(debug=app.config['DEBUG'])
+                response = client.send_message(phone, form.provider.data,
+                                               subject, smstxt)
+
+
+            # TODO Should I resend a new confirmation code here?
+            else:
+                flashmsg = 'This phone number has already signed up but has not been verified. Please check your phone for your confirmation code.'
+        else:
+            flashmsg = 'This phone number has already been signed up.'
+
+        flash(flashmsg)
+
+    else:
+        flash('Invalid phone number. Please try again.')
+        form.phone.errors.append("Invalid format.")
+
+    # TODO Should the commit be moved into helpers.sign_up_user()?
+    # -> would need to pass conn
+    conn.commit()
+    cur.close()
+    conn.close()
+
 
 
 def is_valid_number(number):

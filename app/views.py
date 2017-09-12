@@ -1,10 +1,12 @@
-from app import app, helpers
-from app.forms import SignupForm, UnsubscribeForm, BugReportForm, ConfCodeForm
-from classes.TextClient import TextClient
+from app import app
+from app.forms import SignupForm, UnsubscribeForm, BugReportForm
 from flask import render_template, flash, redirect
 import logging
 import random
 import sendgrid
+from utils import u_views
+from utils import u_db
+from utils.classes.TextClient import TextClient
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -13,69 +15,13 @@ def index():
     """
     Renders the backend of the index page and returns template
     """
-    #FIXME Too many levels of indentation
     form = SignupForm()
     # If the form has been submitted
     if form.validate_on_submit():
-        # Open db connection
-        conn, cur = helpers.get_db_conn_and_cursor(app.config)
-
-        # If all data is valid
-        phone = helpers.is_valid_number(form.phone.data)
-        if phone:
-            # If phone number does not already exist as a verified user
-            cur.execute('SELECT * FROM verified WHERE phone=%s;', [phone])
-            if not cur.fetchone():
-                logging.info({'func': 'index', 'fname': form.fname.data ,
-                              'lname': form.lname.data, 'phone': phone,
-                              'provider': form.provider.data,
-                              'msg': 'user signup'})
-                # If phone number does not already exist as an unverified user
-                cur.execute("SELECT * FROM unverified WHERE phone=%s;", [phone])
-                if not cur.fetchone():
-                    # Add user to unverified signups table
-                    while True: # Ensure there are no confcode collisions in the unverified table
-                        confcode = ''.join(str(x) for x in random.sample(range(10), 6))
-                        if not cur.execute("SELECT * FROM unverified WHERE confcode=%s", [confcode]):
-                            break
-
-                    # TODO The confcode actually gets added to the database in
-                    # the sign_up_user(), this may not be the best design
-                    # decision since it separates it from the above code that
-                    # ensures uniqueness.
-                    flashmsg = helpers.sign_up_user(cur, phone,
-                                                    form.provider.data,
-                                                    form.lname.data.upper(),
-                                                    form.fname.data.upper(),
-                                                    confcode)
-
-                    # Send Text Message via SendBox
-                    subject = 'VT-3 Notifications'
-                    smstxt = 'Your confirmation code is {0}.'.format(confcode)
-                    client = TextClient(debug=app.config['DEBUG'])
-                    response = client.send_message(phone, form.provider.data,
-                                                  subject, smstxt)
-
-
-                # TODO Should I resend a new confirmation code here?
-                else:
-                    flashmsg = 'This phone number has already signed up but has not been verified. Please check your phone for your confirmation code.'
-            else:
-                flashmsg = 'This phone number has already been signed up.'
-
-            flash(flashmsg)
-
-        else:
-            flash('Invalid phone number. Please try again.')
-            form.phone.errors.append("Invalid format.")
-
-        # TODO Should the commit be moved into helpers.sign_up_user()?
-        # -> would need to pass conn
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        return redirect('/verify')
+        u_views.run_signup_form(form)
+        # TODO BUG: /verify/ does not flash messages, signing up with the same
+        # number twice will still redirect to verify and ask for confirmation code
+        return redirect('/')
 
     return render_template("index.html", form=form)
 
@@ -124,10 +70,10 @@ def unsubscribe():
     # If the form has been submitted
     if form.validate_on_submit():
         # Open db connection
-        conn, cur = helpers.get_db_conn_and_cursor(app.config)
+        conn, cur = u_db.get_db_conn_and_cursor(app.config)
 
         # If all data is valid
-        phone = helpers.is_valid_number(form.phone.data)
+        phone = u_views.is_valid_number(form.phone.data)
         print(phone)
         if phone:
             # If phone number does not already exist as a verified user
@@ -137,7 +83,7 @@ def unsubscribe():
             if user:
                 # Process unsubscribe request
                 confcode = random.getrandbits(16)
-                flashmsg = helpers.unsubscribe_user(cur, phone, confcode)
+                flashmsg = u_views.unsubscribe_user(cur, phone, confcode)
                 subject = 'VT-3 Notifications'
                 smstxt = "Click the link to unsubscribe. %s%s%d" \
                          % (app.config['BASE_URL'], '/unsubscribe/', confcode)
@@ -167,7 +113,7 @@ def unsubscribe():
 def verify_unsubscribe(confcode):
     logging.debug({'func': 'verify_unsubscribe', 'confcode': confcode})
 
-    conn, cur = helpers.get_db_conn_and_cursor(app.config)
+    conn, cur = u_db.get_db_conn_and_cursor(app.config)
 
     cur.execute("SELECT (phone) FROM unsubscribe WHERE confcode=%s", [confcode])
     d = cur.fetchone()
@@ -200,7 +146,7 @@ def verify():
     if form.validate_on_submit():
         logging.debug({'func': 'verify', 'confcode': form.confcode.data})
 
-        conn, cur = helpers.get_db_conn_and_cursor(app.config)
+        conn, cur = u_db.get_db_conn_and_cursor(app.config)
         cur.execute("SELECT (phone, lname, fname, provider) FROM unverified WHERE confcode=%s;", [form.confcode.data])
         d = cur.fetchone()
 
@@ -220,7 +166,7 @@ def verify():
             # sign up at night and need tomorrows schedule)
             msg = "Congratulations! You have successfully signed up. You " \
                   "will begin receiving messages at the next run."
-            helpers.welcome_message(d[0], ', '.join((d[1], d[2])))
+            u_views.welcome_message(d[0], ', '.join((d[1], d[2])))
             logging.info({'func': 'verify', 'fname':d[2], 'lname': d[1],
                           'phone': d[0], 'msg': 'signup confirmation successful'})
 
