@@ -1,10 +1,12 @@
-from app import app
-from app.helpers import get_db_conn_and_cursor
 import logging
 import os
 import re
+
 import sendgrid
 from sendgrid.helpers.mail import *
+
+from app import app
+from utils import u_db
 
 
 class TextClient:
@@ -51,7 +53,7 @@ class TextClient:
         assert len(phone) == 10
         assert re.match('\d{10}', phone)
 
-        conn, cur = get_db_conn_and_cursor(app.config)
+        conn, cur = u_db.get_db_conn_and_cursor(app.config)
         cur.execute('SELECT gateway FROM smsgateways WHERE name = %s;', [provider])
 
         # Is this really the best behavior I can come up with?
