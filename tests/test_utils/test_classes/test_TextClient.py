@@ -1,6 +1,6 @@
-from app import app
 import unittest
-from classes.TextClient import TextClient
+
+from utils.classes.TextClient import TextClient
 
 
 class TextClientTestCase(unittest.TestCase):
