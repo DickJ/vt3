@@ -1,12 +1,11 @@
 from bs4 import BeautifulSoup
-from classes.TextClient import TextClient
 from datetime import datetime, timedelta, time
 import logging
-import os
 import re
 import ssl
 from urllib import request, parse
-from worker import helpers
+from utils.classes import TextClient
+from utils import u_db
 
 
 def sched_uploaded(c, d):
@@ -295,7 +294,7 @@ def run_online_schedule():
     logging.basicConfig(level=logging.DEBUG)
     logging.info({'func': 'run_online_schedule', 'msg': "Starting run_online_schedule()"})
     # Define Vars
-    conn, cur = helpers.get_db_conn_and_cursor()
+    conn, cur = u_db.get_db_conn_and_cursor()
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
     tomorrow = datetime.now() - timedelta(hours=5) + timedelta(
         days=1)  # adjust timezone

@@ -1,5 +1,6 @@
 import logging
-from worker.helpers import get_db_conn_and_cursor
+from utils.u_db import get_db_conn_and_cursor
+
 
 def run_conf_code_update():
     """
