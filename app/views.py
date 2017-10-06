@@ -8,6 +8,26 @@ from utils import u_views
 from utils import u_db
 from utils.classes.TextClient import TextClient
 
+from twilio.twiml.messaging_response import MessagingResponse
+@app.route("/sms", methods=['GET', 'POST'])
+def incoming_sms():
+    """Send a dynamic reply to an incoming text message"""
+    # Get the message the user sent our Twilio number
+    body = request.values.get('Body', None)
+
+    # Start our TwiML response
+    #resp = MessagingResponse()
+
+    # Send Email via SendBox
+    sg = sendgrid.SendGridAPIClient(apikey=os.environ.get("SENDGRID_API_KEY"))
+    to_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
+    from_email = Email('{}@a.com'.format(request.values.get('From', None)))
+    subject = body
+    content = Content("text/plain", 'a')
+    mail = Mail(from_email, subject, to_email, content)
+    response = sg.client.mail.send.post(request_body=mail.get())
+
+    return str(response) 
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
