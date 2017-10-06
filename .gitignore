@@ -7,3 +7,6 @@
 /misc
 /virtualenv/
 virtualenv/
+__pycache__/
+app/__pycache__/
+utils/classes/__pycache__/

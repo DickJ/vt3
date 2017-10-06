@@ -1,7 +1,12 @@
 import logging
 import os
+import re
+
 import sendgrid
 from sendgrid.helpers.mail import *
+
+from app import app
+from utils import u_db
 
 
 class TextClient:
@@ -42,22 +47,23 @@ class TextClient:
 
         Returns: (str) email address as phone_number@sms.provider.com
         """
-        sms_domains = {'alltell': 'text.wireless.alltel.com',
-                       'att': 'txt.att.net',
-                       'boost': 'myboostmobile.com',
-                       'cricket': 'sms.mycricket.com',
-                       'metropcs': 'mymetropcs.com',
-                       'projectfi': 'msg.fi.google.com',
-                       'sprint': 'messaging.sprintpcs.com',
-                       'straighttalk': 'VTEXT.COM',
-                       'tmobile': 'tmomail.net',
-                       'uscellular': 'email.uscc.net',
-                       'verizon': 'vtext.com',
-                       'virgin': 'vmobl.com',
-                       }
+
+        if phone[:2] == '+1':
+            phone = phone[2:]
+        assert len(phone) == 10
+        assert re.match('\d{10}', phone)
+
+        conn, cur = u_db.get_db_conn_and_cursor(app.config)
+        cur.execute('SELECT gateway FROM smsgateways WHERE name = %s;', [provider])
+
+        # Is this really the best behavior I can come up with?
+        try:
+            gateway_address = cur.fetchone()[0]
+        except TypeError:
+            gateway_address = 'invalidprovider.com'
 
         try:
-            email = phone + '@' + sms_domains[provider]
+            email = phone + '@' + gateway_address
             return email
         except KeyError:
             logging.error({'func': 'TextClient:from_email_address',

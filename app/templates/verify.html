@@ -1,4 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>{{ msg }}</h3>
+{% if msg == ''%}
+    <!-- Need to be able to display error code and form if incorrect confcode entered -->
+    <section id="main">
+        <div class="inner">
+            <header class="major special"><h1>Enter Confirmation Code</h1></header>
+            <form action="" method="post" name="conf">
+                {{ form.hidden_tag() }}
+                <p>
+                    Code: <br>
+                    {{ form.confcode(size=20) }}
+                    {% for error in form.confcode.errors %}
+                        <span style="color: red;">[{{ error }}]</span>
+                    {% endfor %}<br>
+                    <input type="submit" class="button alt" value="Confirm">
+                </p>
+            </form>
+        </div>
+    </section>
+{% else %}
+    <section id="main">
+        <div class="inner">
+            <h3>{{ msg }}</h3>
+        </div>
+    </section>
+{% endif %}
 {% endblock %}
