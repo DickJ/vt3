@@ -1,6 +1,6 @@
 from app import app
 from app.forms import SignupForm, UnsubscribeForm, BugReportForm
-from flask import render_template, flash, redirect
+from flask import render_template, flash, redirect, request
 import logging
 import random
 import sendgrid
@@ -16,7 +16,7 @@ def incoming_sms():
     body = request.values.get('Body', None)
 
     # Start our TwiML response
-    #resp = MessagingResponse()
+    resp = MessagingResponse()
 
     # Send Email via SendBox
     sg = sendgrid.SendGridAPIClient(apikey=os.environ.get("SENDGRID_API_KEY"))
@@ -27,7 +27,7 @@ def incoming_sms():
     mail = Mail(from_email, subject, to_email, content)
     response = sg.client.mail.send.post(request_body=mail.get())
 
-    return str(response) 
+    return str(resp)
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
