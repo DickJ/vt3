@@ -1,6 +1,6 @@
 import unittest
 
-from utils.classes.TextClient import TextClient
+from utils.TextClient import TextClient
 
 
 class TextClientTestCase(unittest.TestCase):

@@ -1,14 +1,19 @@
+import logging
+import os
+import random
+
+import sendgrid
+from sendgrid.helpers.mail import *
+from flask import render_template, flash, redirect, request
+from twilio.twiml.messaging_response import MessagingResponse
+
 from app import app
 from app.forms import SignupForm, UnsubscribeForm, BugReportForm
-from flask import render_template, flash, redirect, request
-import logging
-import random
-import sendgrid
-from utils import u_views
 from utils import u_db
-from utils.classes.TextClient import TextClient
+from utils import u_views
+from utils.TextClient import TextClient
 
-from twilio.twiml.messaging_response import MessagingResponse
+
 @app.route("/sms", methods=['GET', 'POST'])
 def incoming_sms():
     """Send a dynamic reply to an incoming text message"""
@@ -21,7 +26,7 @@ def incoming_sms():
     # Send Email via SendBox
     sg = sendgrid.SendGridAPIClient(apikey=os.environ.get("SENDGRID_API_KEY"))
     to_email = Email(os.environ.get('BUG_REPORTING_EMAIL'))
-    from_email = Email('{}@a.com'.format(request.values.get('From', None)))
+    from_email = Email('{}@vt3.com'.format(request.values.get('From', None)))
     subject = body
     content = Content("text/plain", 'a')
     mail = Mail(from_email, subject, to_email, content)

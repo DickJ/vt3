@@ -1,10 +1,12 @@
-from app import app
-from flask import flash
 import logging
 import random
 import re
+
+from flask import flash
+
+from app import app
 from utils import u_db
-from utils.classes.TextClient import TextClient
+from utils.TextClient import TextClient
 
 
 def run_signup_form(form):

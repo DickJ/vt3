@@ -1,11 +1,12 @@
-from bs4 import BeautifulSoup
-from datetime import datetime, timedelta, time
 import logging
 import re
 import ssl
+from datetime import datetime, timedelta, time
 from urllib import request, parse
-from utils.classes import TextClient
-from utils import u_db
+
+from bs4 import BeautifulSoup
+
+from utils import u_db, TextClient
 
 
 def sched_uploaded(c, d):
