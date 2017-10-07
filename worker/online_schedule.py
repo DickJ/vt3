@@ -6,7 +6,8 @@ from urllib import request, parse
 
 from bs4 import BeautifulSoup
 
-from utils import u_db, TextClient
+from utils import u_db
+from utils.TextClient import TextClient
 
 
 def sched_uploaded(c, d):
@@ -20,7 +21,8 @@ def sched_uploaded(c, d):
     Returns:
         True if the date "dt" has already been processed, else returns False
     """
-    logging.info({'func': 'sched_uploaded', 'msg': 'Checking if schedule has been processed' })
+    logging.info({'func': 'sched_uploaded',
+                  'msg': 'Checking if schedule has been processed'})
     c.execute("SELECT id FROM schedule WHERE date=%s", [d.strftime("%B %-d")])
     return bool(c.fetchone())
 
@@ -50,7 +52,8 @@ def get_schedule_page(url, dt):
         '__VIEWSTATE': viewstate[0]['value'],
     }
     encodedDate = parse.urlencode(dateForm).encode('ascii')
-    soup = BeautifulSoup(request.urlopen(url, encodedDate, context=context), "lxml")
+    soup = BeautifulSoup(request.urlopen(url, encodedDate, context=context),
+                         "lxml")
 
     # Now that we have the proper date, retrieve the schedule
     logging.info({'func': 'get_schedule_page', 'msg': 'Downloading schedule'})
@@ -78,7 +81,7 @@ def process_raw_schedule(sp):
     Returns:
         the daily schedule processed into a list of dicts
     """
-    #TODO verify columns in case of underlying page change
+    # TODO verify columns in case of underlying page change
     logging.debug({'func': 'process_raw_schedule'})
     daily_sched = []
     try:
@@ -87,7 +90,7 @@ def process_raw_schedule(sp):
         for row in raw_data[1:]:
             d = row.findAll('td')
             assert (
-            len(d) == 11), "Error: There are not enough columns in the data"
+                len(d) == 11), "Error: There are not enough columns in the data"
             daily_sched.append({"type": d[0].text,
                                 "vt": d[1].text,
                                 "brief": d[2].text,
@@ -101,7 +104,8 @@ def process_raw_schedule(sp):
                                 "location": d[10].text
                                 })
     except AttributeError:
-        logging.info({'func': 'process_raw_schedule', 'msg': 'Schedule not yet published'})
+        logging.info({'func': 'process_raw_schedule',
+                      'msg': 'Schedule not yet published'})
         # Schedule not yet published
         pass
     return daily_sched
@@ -121,18 +125,18 @@ def insert_in_pg(cr, s, d):
     logging.debug({'func': 'insert_ing_pg', 'cr': cr, 's': s, 'd': d})
     for row in s:
         cr.execute("INSERT INTO schedule (type, brief, edt, rtb, "
-                    "instructor, student, event, remarks, location, date) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                    [row['type'],
-                     row['brief'],
-                     row['edt'],
-                     row['rtb'],
-                     row['instructor'],
-                     row['student'],
-                     row['event'],
-                     row['remarks'],
-                     row['location'],
-                     d.strftime('%B %-d')])
+                   "instructor, student, event, remarks, location, date) "
+                   "VALUES (%S, %S, %S, %S, %S, %S, %S, %S, %S, %S)",
+                   [row['type'],
+                    row['brief'],
+                    row['edt'],
+                    row['rtb'],
+                    row['instructor'],
+                    row['student'],
+                    row['event'],
+                    row['remarks'],
+                    row['location'],
+                    d.strftime('%B %-d')])
 
 
 def delete_old_sched(cur, dt):
@@ -167,17 +171,20 @@ def send_all_texts(cur, dt):
     client = TextClient()
 
     cur.execute("SELECT lname, fname, phone, provider FROM verified")
-    all_users = [(str(x[0]+', '+x[1]), x[2], x[3]) for x in cur.fetchall()]
+    all_users = [(str(x[0] + ', ' + x[1]), x[2], x[3]) for x in cur.fetchall()]
 
     for user in all_users:
         logging.info({'func': 'send_all_texts', 'user': user})
         # Ugly SQL, but this just says "Find user's schedule for a date'
-        cur.execute("SELECT * FROM schedule WHERE date=%s and (instructor LIKE %s or student LIKE %s);",
-                    [dt.strftime("%B %-d"), ''.join(('%',user[0],'%')), ''.join(('%',user[0],'%'))])
+        cur.execute(
+            "SELECT * FROM schedule WHERE date=%s AND (instructor LIKE %s OR student LIKE %s);",
+            [dt.strftime("%B %-d"), ''.join(('%', user[0], '%')),
+             ''.join(('%', user[0], '%'))])
 
         all_msg = generate_message(user, cur.fetchall(), dt.strftime('%B %-d'))
         for msg in all_msg:
-            response = client.send_message(user[1], user[2], dt.strftime('%b %-d'), msg)
+            response = client.send_message(user[1], user[2],
+                                           dt.strftime('%b %-d'), msg)
 
 
 def generate_message(user, data, dt):
@@ -191,7 +198,8 @@ def generate_message(user, data, dt):
     Returns:
         A str containing the body of the text message to be sent.
     """
-    logging.info({'func': 'generate_message', 'user': user, 'data': data, 'dt': dt})
+    logging.info(
+        {'func': 'generate_message', 'user': user, 'data': data, 'dt': dt})
     all_msg = []
     msg = ''
     type_of_day = tuple([d[1] for d in data])
@@ -216,7 +224,7 @@ def generate_message(user, data, dt):
             elif d[6] != u'\xa0':
                 msg = ''.join((msg, '%s' % (d[6])))
             else:
-                #TODO Raise or report an error
+                # TODO Raise or report an error
                 pass
 
             if d[8] != u'\xa0':
@@ -291,9 +299,11 @@ def send_squadron_notes(url, dt, cur):
         print("Neither squadron notes, nor no squadron notes message exist.")
         raise ValueError
 
+
 def run_online_schedule():
     logging.basicConfig(level=logging.DEBUG)
-    logging.info({'func': 'run_online_schedule', 'msg': "Starting run_online_schedule()"})
+    logging.info({'func': 'run_online_schedule',
+                  'msg': "Starting run_online_schedule()"})
     # Define Vars
     conn, cur = u_db.get_db_conn_and_cursor()
     url = 'https://www.cnatra.navy.mil/scheds/schedule_data.aspx?sq=vt-3'
@@ -302,7 +312,8 @@ def run_online_schedule():
 
     if tomorrow.weekday() == 5:  # If it is Friday and we're looking for Sat's sched
         dates = (
-        tomorrow, tomorrow + timedelta(days=1), tomorrow + timedelta(days=2))
+            tomorrow, tomorrow + timedelta(days=1),
+            tomorrow + timedelta(days=2))
     else:
         dates = (tomorrow,)
 
@@ -311,7 +322,8 @@ def run_online_schedule():
 
     for dt in dates:
         logging.info(
-            {'func': 'run_online_schedule', 'msg': "Checking schedule for %r" % tomorrow})
+            {'func': 'run_online_schedule',
+             'msg': "Checking schedule for %r" % tomorrow})
 
         # Download Schedule
         try:
@@ -353,9 +365,11 @@ def run_online_schedule():
 
         except AttributeError as e:
             logging.debug({'func': 'run_online_schedule', 'error': e})
-            logging.info({'func': 'run_online_schedule', 'msg': "Schedule not yet published"})
+            logging.info({'func': 'run_online_schedule',
+                          'msg': "Schedule not yet published"})
 
     cur.close()
     conn.close()
 
-    logging.info({'func': 'run_online_schedule', 'msg': "run_online_schedule() exiting"})
+    logging.info(
+        {'func': 'run_online_schedule', 'msg': "run_online_schedule() exiting"})
