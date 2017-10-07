@@ -6,7 +6,7 @@ from flask import flash
 
 from app import app
 from utils import u_db
-from utils.TextClient import TextClient
+from .TextClient import TextClient
 
 
 def run_signup_form(form):
@@ -52,7 +52,6 @@ def run_signup_form(form):
     conn.close()
 
 
-
 def is_valid_number(number):
     """
     Determines if a given phone number is valid or not
@@ -88,6 +87,7 @@ def is_valid_number(number):
     else:
         return False
 
+
 def sign_up_user(cur, conn, phone, provider, lname, fname):
     """
     Adds a user to the unverified users table
@@ -120,7 +120,8 @@ def sign_up_user(cur, conn, phone, provider, lname, fname):
 
     conn.commit()
 
-    return 'Signup requested for %s. You should receive a text message shortly' % (phone)
+    return 'Signup requested for %s. You should receive a text message shortly' % phone
+
 
 def send_conf_code(phone, provider, subject, confcode):
     """
@@ -141,6 +142,7 @@ def send_conf_code(phone, provider, subject, confcode):
              % (app.config['BASE_URL'], '/verify/', confcode)
     client = TextClient(debug=app.config['DEBUG'])
     return client.send_message(phone, provider, subject, smstxt)
+
 
 def unsubscribe_user(cur, phone, confcode):
     """
