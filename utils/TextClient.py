@@ -5,23 +5,32 @@ import re
 import sendgrid
 from sendgrid.helpers.mail import *
 
-from app import app
 from utils import u_db
 
 
 class TextClient:
-    def __init__(self, debug=False):
+    def __init__(self, msg_svc='sendgrid', debug=False):
         self.debug = debug
+        self.msg_svc = msg_svc
+
         if debug:
-            self.sg = None
+            self.msgr = None
+
+        if msg_svc == 'sendgrid':
+            self.msgr = sendgrid.SendGridAPIClient(
+                apikey=os.environ.get('SENDGRID_API_KEY'))
+            self.from_email = Email('vt3@herokuapp.com')
+        elif msg_svc == 'twilio':
+            pass
         else:
-            self.sg = sendgrid.SendGridAPIClient(
-                apikey = os.environ.get('SENDGRID_API_KEY'))
-        self.from_email = Email('vt3@herokuapp.com')
+            pass
 
     def send_message(self, phone, provider, date, msg):
+        assert self.msg_svc == 'sendgrid', \
+            "Attempting to use sendgrid with twilio set as message service."
         assert phone[0] == '+' and phone[1] == '1', \
             'TextClient:send_message() - Invalid phone number %r' % phone
+
         phone = phone[2:]
         subject = date
         to_email = Email(self.from_email_address(phone, provider))
@@ -32,7 +41,7 @@ class TextClient:
             response = str(mail.get())
             logging.debug(response)
         else:
-            response = self.sg.client.mail.send.post(request_body=mail.get())
+            response = self.msgr.client.mail.send.post(request_body=mail.get())
 
         return response
 
@@ -53,7 +62,7 @@ class TextClient:
         assert len(phone) == 10
         assert re.match('\d{10}', phone)
 
-        conn, cur = u_db.get_db_conn_and_cursor(app.config)
+        conn, cur = u_db.get_db_conn_and_cursor()
         cur.execute('SELECT gateway FROM smsgateways WHERE name = %s;', [provider])
 
         # Is this really the best behavior I can come up with?
@@ -69,6 +78,3 @@ class TextClient:
             logging.error({'func': 'TextClient:from_email_address',
                            'msg': 'KeyError: %r is not a valid mobile provider' % provider})
             return 'blackhole@nowhere.com' # TODO Setup email address for error
-
-
-
