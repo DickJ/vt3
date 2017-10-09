@@ -112,7 +112,7 @@ def unsubscribe():
                          % (app.config['BASE_URL'], '/unsubscribe/', confcode)
                 # Send Text Message
                 tc = TextClient(debug=app.config['DEBUG'])
-                response = tc.send_message(phone, user[0], subject, smstxt)
+                response = tc.send_message(phone, subject, smstxt, user[0])
 
                 #flash(flashmsg)
                 #return redirect('/')

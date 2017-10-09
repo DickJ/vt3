@@ -141,7 +141,7 @@ def send_conf_code(phone, provider, subject, confcode):
     smstxt = 'Click the link to confirm %s%s%d' \
              % (app.config['BASE_URL'], '/verify/', confcode)
     client = TextClient(debug=app.config['DEBUG'])
-    return client.send_message(phone, provider, subject, smstxt)
+    return client.send_message(phone, subject, smstxt, provider)
 
 
 def unsubscribe_user(cur, phone, confcode):

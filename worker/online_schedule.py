@@ -177,7 +177,7 @@ def send_all_texts(cur, dt):
 
         all_msg = generate_message(user, cur.fetchall(), dt.strftime('%B %-d'))
         for msg in all_msg:
-            response = client.send_message(user[1], user[2], dt.strftime('%b %-d'), msg)
+            response = client.send_message(user[1], dt.strftime('%b %-d'), msg, user[2])
 
 
 def generate_message(user, data, dt):
@@ -283,7 +283,7 @@ def send_squadron_notes(url, dt, cur):
         text = re.sub(u'\xa0', ' ', notes.text.strip())
         cur.execute("SELECT phone, provider FROM verified;")
         for phone, provider in cur.fetchall():
-            tc.send_message(phone, provider, dt.strftime('%B %-d'), text)
+            tc.send_message(phone, dt.strftime('%B %-d'), text, provider)
     else:
         notes = notes_page_soup.find(id='lblNoCoversheet')
 
@@ -348,8 +348,7 @@ def run_online_schedule():
                 msg = "The schedule has not been published yet. Please call the " \
                       "SDO at (850)623-7323 for tomorrow's schedule."
                 for phone, provider in cur.fetchall():
-                    client.send_message(phone, provider, dt.strftime('%B %-d'),
-                                        msg)
+                    client.send_message(phone, dt.strftime('%B %-d'), msg, provider)
 
         except AttributeError as e:
             logging.debug({'func': 'run_online_schedule', 'error': e})
