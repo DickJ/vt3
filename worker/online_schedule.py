@@ -122,6 +122,8 @@ def insert_in_pg(cr, s, d):
 
     Returns: None
     """
+    # TODO: This function should take the conn and commit() as well
+    # TODO: Return something so we know we have successful execution
     logging.debug({'func': 'insert_ing_pg', 'cr': cr, 's': s, 'd': d})
     for row in s:
         cr.execute("INSERT INTO schedule (type, brief, edt, rtb, "
@@ -175,7 +177,7 @@ def send_all_texts(cur, dt):
 
     for user in all_users:
         logging.info({'func': 'send_all_texts', 'user': user})
-        # Ugly SQL, but this just says "Find user's schedule for a date'
+        # This just says "Find user's schedule for a date'
         cur.execute(
             "SELECT * FROM schedule WHERE date=%s AND (instructor LIKE %s OR student LIKE %s);",
             [dt.strftime("%B %-d"), ''.join(('%', user[0], '%')),
@@ -244,6 +246,7 @@ def generate_message(user, data, dt):
 def send_squadron_notes(url, dt, cur):
     """
     """
+    # TODO Return something! Anything!
     logging.debug({'func': 'get_schedule_page', 'url': url, 'dt': dt})
     logging.info({'func': 'get_schedule_page', 'msg': 'Downloading Page'})
     context = ssl._create_unverified_context()
@@ -295,6 +298,8 @@ def send_squadron_notes(url, dt, cur):
         notes = notes_page_soup.find(id='lblNoCoversheet')
 
     if not notes:
+        # TODO Can't get to this point with the if/else above.
+        # TODO This should log, not print
         print("Neither squadron notes, nor no squadron notes message exist.")
         raise ValueError
 
