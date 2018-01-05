@@ -101,7 +101,7 @@ def unsubscribe():
         if phone:
             # If phone number does not already exist as a verified user
             cur.execute('SELECT provider FROM verified WHERE phone=%s AND fname=%s and lname=%s;',
-                        [phone, form.fname.data.upper(), form.lname.data.upper()])
+                        [phone, form.fname.data.upper().rstrip(), form.lname.data.upper().rstrip()])
             user = cur.fetchone()
             if user:
                 # Process unsubscribe request
@@ -194,4 +194,7 @@ def verify(confcode):
     cur.close()
     conn.close()
 
-    return render_template("verify.html/0", msg=msg)
+    #TODO: This is a shitty fix for redirecting and flashing the message
+    # after a successful signup
+    return redirect('/')
+    #return render_template("verify.html/0", msg=msg)

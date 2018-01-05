@@ -122,6 +122,8 @@ def insert_in_pg(cr, s, d):
 
     Returns: None
     """
+    # TODO: This function should take the conn and commit() as well
+    # TODO: Return something so we know we have successful execution
     logging.debug({'func': 'insert_ing_pg', 'cr': cr, 's': s, 'd': d})
     for row in s:
         cr.execute("INSERT INTO schedule (type, brief, edt, rtb, "
@@ -175,7 +177,7 @@ def send_all_texts(cur, dt):
 
     for user in all_users:
         logging.info({'func': 'send_all_texts', 'user': user})
-        # Ugly SQL, but this just says "Find user's schedule for a date'
+        # This just says "Find user's schedule for a date'
         cur.execute(
             "SELECT * FROM schedule WHERE date=%s AND (instructor LIKE %s OR student LIKE %s);",
             [dt.strftime("%B %-d"), ''.join(('%', user[0], '%')),
@@ -244,6 +246,7 @@ def generate_message(user, data, dt):
 def send_squadron_notes(url, dt, cur):
     """
     """
+    # TODO Return something! Anything!
     logging.debug({'func': 'get_schedule_page', 'url': url, 'dt': dt})
     logging.info({'func': 'get_schedule_page', 'msg': 'Downloading Page'})
     context = ssl._create_unverified_context()
@@ -295,6 +298,8 @@ def send_squadron_notes(url, dt, cur):
         notes = notes_page_soup.find(id='lblNoCoversheet')
 
     if not notes:
+        # TODO Can't get to this point with the if/else above.
+        # TODO This should log, not print
         print("Neither squadron notes, nor no squadron notes message exist.")
         raise ValueError
 
@@ -344,8 +349,25 @@ def run_online_schedule():
                 conn.commit()
                 send_all_texts(cur, dt)
                 send_squadron_notes(url, dt, cur)
+
+
             # If it gets too late and the schedule hasn't been published, send out
             # a text. But only do this once, so let's use 1930L == 0030UTC
+
+            # 1/4/2018 Wow, so here is a fun issue. This current code will keep
+            # looking for the schedule after it hasn't been published, just in
+            # case it does end up getting published late. It just sends a
+            # message out at the specified time, but still keeps looking.
+            # On the date above, that message was sent out 3x despite the
+            # scheduler being set to run every 30 minutes. Not a fucking clue
+            # how that ended up happening. The logs indicate it ran at 16:31,
+            # 16:43, and 16:58 despite the scheduler being set to run on the
+            # hour and on the half hour.
+            #
+            # Jan 03 16:31:33 vt3 app/scheduler.3386:  WARNING:root:{'msg': 'Schedule was not published by 0100Z', 'func': 'run_online_schedule'}
+            # Jan 03 16:43:09 vt3 app/worker.1:  WARNING:root:{'func': 'run_online_schedule', 'msg': 'Schedule was not published by 0100Z'}
+            # Jan 03 16:58:40 vt3 app/worker.1:  WARNING:root:{'func': 'run_online_schedule', 'msg': 'Schedule was not published by 0100Z'}
+
             # TODO: What about when DST ends?
             elif not sched and time(0, 29, 0) < datetime.now().time() < time(0,
                                                                              59,

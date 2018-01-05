@@ -31,8 +31,8 @@ def run_signup_form(form):
             if not unverified_user:
                 #  Add user to unverified signups table
                 flashmsg = sign_up_user(cur, conn, phone, form.provider.data,
-                                        form.lname.data.upper(),
-                                        form.fname.data.upper())
+                                        form.lname.data.upper().rstrip(),
+                                        form.fname.data.upper().rstrip())
 
             else:
                 confcode = int(unverified_user[0])
