@@ -349,8 +349,25 @@ def run_online_schedule():
                 conn.commit()
                 send_all_texts(cur, dt)
                 send_squadron_notes(url, dt, cur)
+
+
             # If it gets too late and the schedule hasn't been published, send out
             # a text. But only do this once, so let's use 1930L == 0030UTC
+
+            # 1/4/2018 Wow, so here is a fun issue. This current code will keep
+            # looking for the schedule after it hasn't been published, just in
+            # case it does end up getting published late. It just sends a
+            # message out at the specified time, but still keeps looking.
+            # On the date above, that message was sent out 3x despite the
+            # scheduler being set to run every 30 minutes. Not a fucking clue
+            # how that ended up happening. The logs indicate it ran at 16:31,
+            # 16:43, and 16:58 despite the scheduler being set to run on the
+            # hour and on the half hour.
+            #
+            # Jan 03 16:31:33 vt3 app/scheduler.3386:  WARNING:root:{'msg': 'Schedule was not published by 0100Z', 'func': 'run_online_schedule'}
+            # Jan 03 16:43:09 vt3 app/worker.1:  WARNING:root:{'func': 'run_online_schedule', 'msg': 'Schedule was not published by 0100Z'}
+            # Jan 03 16:58:40 vt3 app/worker.1:  WARNING:root:{'func': 'run_online_schedule', 'msg': 'Schedule was not published by 0100Z'}
+
             # TODO: What about when DST ends?
             elif not sched and time(0, 29, 0) < datetime.now().time() < time(0,
                                                                              59,
