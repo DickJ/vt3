@@ -194,4 +194,7 @@ def verify(confcode):
     cur.close()
     conn.close()
 
-    return render_template("verify.html/0", msg=msg)
+    #TODO: This is a shitty fix for redirecting and flashing the message
+    # after a successful signup
+    return redirect('/')
+    #return render_template("verify.html/0", msg=msg)
