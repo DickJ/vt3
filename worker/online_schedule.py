@@ -2,6 +2,7 @@ import logging
 import re
 import ssl
 from datetime import datetime, timedelta, time
+import os
 from urllib import request, parse
 
 from bs4 import BeautifulSoup
@@ -127,8 +128,8 @@ def insert_in_pg(cr, s, d):
     logging.debug({'func': 'insert_ing_pg', 'cr': cr, 's': s, 'd': d})
     for row in s:
         cr.execute("INSERT INTO schedule (type, brief, edt, rtb, "
-                   "instructor, student, event, remarks, location, date) "
-                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                   "instructor, student, event, remarks, location, date, timestamp) "
+                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now())",
                    [row['type'],
                     row['brief'],
                     row['edt'],
@@ -138,7 +139,8 @@ def insert_in_pg(cr, s, d):
                     row['event'],
                     row['remarks'],
                     row['location'],
-                    d.strftime('%B %-d')])
+                    d.strftime('%B %-d')],
+                    )
 
 
 def delete_old_sched(cur, dt):
@@ -170,7 +172,7 @@ def send_all_texts(cur, dt):
     """
     logging.debug({'func': 'send_all_texts', 'dt': dt})
 
-    client = TextClient()
+    client = TextClient(debug=os.environ['DEBUG'])
 
     cur.execute("SELECT lname, fname, phone, provider FROM verified")
     all_users = [(str(x[0] + ', ' + x[1]), x[2], x[3]) for x in cur.fetchall()]
@@ -286,7 +288,7 @@ def send_squadron_notes(url, dt, cur):
     notes_page_soup = BeautifulSoup(request.urlopen(
         url, encodedFields, context=context), 'lxml')
 
-    tc = TextClient()
+    tc = TextClient(debug=os.environ['DEBUG'])
     notes = notes_page_soup.find(id='dgCoversheet')
 
     if notes:
@@ -375,7 +377,7 @@ def run_online_schedule():
                 logging.warning({'func': 'run_online_schedule',
                                  'msg': 'Schedule was not published by 0100Z'})
                 # TODO Only instantiate one TextClient in main.py
-                client = TextClient()
+                client = TextClient(debug=os.environ['DEBUG'])
 
                 cur.execute("SELECT phone, provider FROM verified;")
                 msg = "The schedule has not been published yet. Please call the " \
