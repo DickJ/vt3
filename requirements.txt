@@ -12,6 +12,6 @@ psycopg2-binary==2.8.4
 sendgrid==3.4.0
 stripe==1.41.1
 twilio==6.4.1
-Werkzeug==0.11.3
+Werkzeug==0.15.3
 wheel==0.26.0
 WTForms==2.1
