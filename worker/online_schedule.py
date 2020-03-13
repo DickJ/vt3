@@ -128,7 +128,7 @@ def insert_in_pg(cr, s, d):
     logging.debug({'func': 'insert_ing_pg', 'cr': cr, 's': s, 'd': d})
     for row in s:
         cr.execute("INSERT INTO schedule (type, brief, edt, rtb, "
-                   "instructor, student, event, remarks, location, date, timestamp) "
+                   "instructor, student, event, remarks, location, date, timestamp, sq) "
                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now())",
                    [row['type'],
                     row['brief'],
@@ -140,6 +140,7 @@ def insert_in_pg(cr, s, d):
                     row['remarks'],
                     row['location'],
                     d.strftime('%B %-d')],
+                    row['vt']
                     )
 
 
@@ -172,7 +173,7 @@ def send_all_texts(cur, dt):
     """
     logging.debug({'func': 'send_all_texts', 'dt': dt})
 
-    client = TextClient(debug=os.environ['DEBUG'])
+    client = TextClient()
 
     cur.execute("SELECT lname, fname, phone, provider FROM verified")
     all_users = [(str(x[0] + ', ' + x[1]), x[2], x[3]) for x in cur.fetchall()]
