@@ -289,7 +289,7 @@ def send_squadron_notes(url, dt, cur):
     notes_page_soup = BeautifulSoup(request.urlopen(
         url, encodedFields, context=context), 'lxml')
 
-    tc = TextClient(debug=os.environ['DEBUG'])
+    tc = TextClient()
     notes = notes_page_soup.find(id='dgCoversheet')
 
     if notes:
@@ -378,7 +378,7 @@ def run_online_schedule():
                 logging.warning({'func': 'run_online_schedule',
                                  'msg': 'Schedule was not published by 0100Z'})
                 # TODO Only instantiate one TextClient in main.py
-                client = TextClient(debug=os.environ['DEBUG'])
+                client = TextClient()
 
                 cur.execute("SELECT phone, provider FROM verified;")
                 msg = "The schedule has not been published yet. Please call the " \
