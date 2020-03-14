@@ -72,8 +72,20 @@ class OnlineScheduleTestCase(unittest.TestCase):
                          correct_result)
 
     def test_insert_in_pg(self):
-        #online_schedule.insert_in_pg(self.cur)
-        pass
+        d = datetime.now()
+        s = [{'type':       "T-6B Flight",
+              'brief':      "06:30",
+              'edt':        "08:15",
+              'rtb':        "09:45",
+              'instructor': "Test, Instructor",
+              'student':    "Test, Student",
+              'event':      "C4101",
+              'remarks':    "OnlineScheduleTestCase",
+              'location':   " ",
+              'vt':         "VT-3"},
+             ]
+        online_schedule.insert_in_pg(self.cur, s, d)
+
 
     def test_delete_old_sched(self):
         pass

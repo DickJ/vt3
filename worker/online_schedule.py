@@ -129,7 +129,7 @@ def insert_in_pg(cr, s, d):
     for row in s:
         cr.execute("INSERT INTO schedule (type, brief, edt, rtb, "
                    "instructor, student, event, remarks, location, date, timestamp, sq) "
-                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now())",
+                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now(), %s)",
                    [row['type'],
                     row['brief'],
                     row['edt'],
@@ -140,7 +140,7 @@ def insert_in_pg(cr, s, d):
                     row['remarks'],
                     row['location'],
                     d.strftime('%B %-d'),
-                    row['vt']],
+                    row['vt']]
                    )
 
 
