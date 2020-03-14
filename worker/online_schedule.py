@@ -91,7 +91,7 @@ def process_raw_schedule(sp):
         for row in raw_data[1:]:
             d = row.findAll('td')
             assert (
-                len(d) == 11), "Error: There are not enough columns in the data"
+                    len(d) == 11), "Error: There are not enough columns in the data"
             daily_sched.append({"type": d[0].text,
                                 "vt": d[1].text,
                                 "brief": d[2].text,
@@ -139,9 +139,9 @@ def insert_in_pg(cr, s, d):
                     row['event'],
                     row['remarks'],
                     row['location'],
-                    d.strftime('%B %-d')],
-                    row['vt']
-                    )
+                    d.strftime('%B %-d'),
+                    row['vt']],
+                   )
 
 
 def delete_old_sched(cur, dt):
@@ -190,7 +190,7 @@ def send_all_texts(cur, dt):
         for msg in all_msg:
             response = client.send_message(user[1], dt.strftime('%b %-d'), msg, user[2])
 
-            
+
 def generate_message(user, data, dt):
     """
 
